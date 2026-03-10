@@ -11,8 +11,12 @@ import { healthRoutes } from "./routes/health.js";
 import { apiKeyRoutes } from "./routes/api-keys.js";
 import { a2aRoutes } from "./routes/a2a.js";
 import { anomalyRoutes } from "./routes/anomalies.js";
+import { billingRoutes } from "./routes/billing.js";
+import { tenantRoutes } from "./routes/tenants.js";
 import { authMiddleware } from "./middleware/auth.js";
 import { AnomalyDetector } from "./services/anomaly-detector.js";
+import { BillingService } from "./services/billing.js";
+import { UsageTracker } from "./services/usage-tracker.js";
 import type { Database } from "./db/index.js";
 
 declare module "fastify" {
@@ -20,6 +24,8 @@ declare module "fastify" {
     db: Database;
     evaluator: PolicyEvaluator;
     anomalyDetector: AnomalyDetector;
+    billingService: BillingService;
+    usageTracker: UsageTracker;
   }
 }
 
@@ -46,10 +52,14 @@ export async function buildServer(options: BuildServerOptions) {
   const evaluator = new PolicyEvaluator();
 
   const anomalyDetector = new AnomalyDetector(db);
+  const billingService = new BillingService(db);
+  const usageTracker = new UsageTracker(db);
 
   server.decorate("db", db);
   server.decorate("evaluator", evaluator);
   server.decorate("anomalyDetector", anomalyDetector);
+  server.decorate("billingService", billingService);
+  server.decorate("usageTracker", usageTracker);
 
   // Register auth middleware (must come before routes)
   await server.register(authMiddleware);
@@ -173,6 +183,7 @@ export async function buildServer(options: BuildServerOptions) {
         anomalies: "/api/v1/anomalies",
         a2a: "/api/v1/a2a",
         keys: "/api/v1/keys",
+        tenants: "/api/v1/tenants",
       },
     };
   });
@@ -186,6 +197,8 @@ export async function buildServer(options: BuildServerOptions) {
   await server.register(auditRoutes, { prefix: "/api/v1/audit" });
   await server.register(a2aRoutes, { prefix: "/api/v1/a2a" });
   await server.register(anomalyRoutes, { prefix: "/api/v1/anomalies" });
+  await server.register(billingRoutes, { prefix: "/api/v1/billing" });
+  await server.register(tenantRoutes, { prefix: "/api/v1/tenants" });
 
   return server;
 }

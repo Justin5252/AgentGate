@@ -10,6 +10,7 @@ export type ApiKeyRecord = typeof schema.apiKeys.$inferSelect;
 declare module "fastify" {
   interface FastifyRequest {
     apiKey?: ApiKeyRecord;
+    tenantId?: string | null;
   }
 }
 
@@ -76,6 +77,9 @@ export const authMiddleware = fp(async function authMiddlewarePlugin(server: Fas
 
       // Attach key record to request
       request.apiKey = keyRecord;
+
+      // Attach tenant context from API key
+      request.tenantId = keyRecord.tenantId ?? null;
 
       // Update last_used_at fire-and-forget
       server.db

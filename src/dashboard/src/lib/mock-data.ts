@@ -1,5 +1,5 @@
 import type { AgentIdentity, Policy, AuditEntry } from "@agentgate/shared";
-import type { AuditStats, Anomaly, AnomalyStats, A2AGraph, A2AChannel, A2AStats } from "./api";
+import type { AuditStats, Anomaly, AnomalyStats, A2AGraph, A2AChannel, A2AStats, Plan, Subscription, TenantUsage, ApiKey, TenantUser } from "./api";
 
 export const mockAgents: AgentIdentity[] = [
   {
@@ -456,3 +456,67 @@ export const mockA2AStats: A2AStats = {
   totalCommunications24h: 127,
   blockedChannels: 1,
 };
+
+// ─── Billing & Settings ─────────────────────────────────────────────
+
+export const mockPlans: Plan[] = [
+  {
+    id: "free",
+    name: "Free",
+    price: 0,
+    interval: "monthly",
+    agentLimit: 5,
+    evalLimit: 10000,
+    features: ["5 agents", "10K evaluations/mo", "Community support", "JS & Python SDKs"],
+  },
+  {
+    id: "pro",
+    name: "Pro",
+    price: 499,
+    interval: "monthly",
+    agentLimit: -1,
+    evalLimit: 1000000,
+    features: ["Unlimited agents", "1M evaluations/mo", "All integrations", "Anomaly detection", "Priority support"],
+  },
+  {
+    id: "enterprise",
+    name: "Enterprise",
+    price: 0,
+    interval: "monthly",
+    agentLimit: -1,
+    evalLimit: -1,
+    features: ["Unlimited everything", "On-premise deployment", "SSO/SAML", "Custom SLAs", "Dedicated CSM", "Compliance module"],
+  },
+];
+
+export const mockSubscription: Subscription = {
+  id: "sub-1",
+  tenantId: "tenant-1",
+  plan: "pro",
+  status: "active",
+  currentPeriodStart: "2026-03-01T00:00:00Z",
+  currentPeriodEnd: "2026-04-01T00:00:00Z",
+  cancelAtPeriodEnd: false,
+};
+
+export const mockUsage: TenantUsage = {
+  tenantId: "tenant-1",
+  agentCount: 5,
+  agentLimit: -1,
+  evalCountThisMonth: 45230,
+  evalLimitPerMonth: 1000000,
+  periodStart: "2026-03-01T00:00:00Z",
+  periodEnd: "2026-04-01T00:00:00Z",
+};
+
+export const mockApiKeys: ApiKey[] = [
+  { id: "key-1", name: "Production API Key", keyPrefix: "ag_live_a1b2", scopes: ["*"], ownerId: "admin", createdAt: "2026-02-15T00:00:00Z", lastUsedAt: "2026-03-10T19:30:00Z", revoked: false },
+  { id: "key-2", name: "Development Key", keyPrefix: "ag_live_c3d4", scopes: ["*"], ownerId: "admin", createdAt: "2026-03-01T00:00:00Z", lastUsedAt: "2026-03-10T18:00:00Z", revoked: false },
+  { id: "key-3", name: "CI/CD Pipeline", keyPrefix: "ag_live_e5f6", scopes: ["authorize"], ownerId: "ci-bot", createdAt: "2026-03-05T00:00:00Z", lastUsedAt: null, revoked: true },
+];
+
+export const mockTenantUsers: TenantUser[] = [
+  { id: "user-1", tenantId: "tenant-1", email: "admin@company.com", name: "Admin User", role: "owner", createdAt: "2026-02-01T00:00:00Z", lastLoginAt: "2026-03-10T19:00:00Z" },
+  { id: "user-2", tenantId: "tenant-1", email: "dev@company.com", name: "Dev Engineer", role: "admin", createdAt: "2026-02-10T00:00:00Z", lastLoginAt: "2026-03-10T17:00:00Z" },
+  { id: "user-3", tenantId: "tenant-1", email: "auditor@company.com", name: "Security Auditor", role: "auditor", createdAt: "2026-03-01T00:00:00Z", lastLoginAt: "2026-03-09T10:00:00Z" },
+];

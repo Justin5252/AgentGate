@@ -226,3 +226,118 @@ export async function fetchA2ACommunications(
 export async function fetchA2AStats(): Promise<A2AStats> {
   return request<A2AStats>("/api/v1/a2a/stats");
 }
+
+// ─── Billing ──────────────────────────────────────────────────────
+
+export interface Plan {
+  id: string;
+  name: string;
+  price: number;
+  interval: string;
+  agentLimit: number;
+  evalLimit: number;
+  features: string[];
+}
+
+export interface Subscription {
+  id: string;
+  tenantId: string;
+  plan: string;
+  status: string;
+  currentPeriodStart: string;
+  currentPeriodEnd: string;
+  cancelAtPeriodEnd: boolean;
+}
+
+export interface TenantUsage {
+  tenantId: string;
+  agentCount: number;
+  agentLimit: number;
+  evalCountThisMonth: number;
+  evalLimitPerMonth: number;
+  periodStart: string;
+  periodEnd: string;
+}
+
+export async function fetchPlans(): Promise<Plan[]> {
+  return request<Plan[]>("/api/v1/billing/plans");
+}
+
+export async function fetchSubscription(tenantId: string): Promise<Subscription> {
+  return request<Subscription>(`/api/v1/billing/subscription/${tenantId}`);
+}
+
+export async function createCheckout(data: Record<string, unknown>): Promise<{ url: string }> {
+  return request<{ url: string }>("/api/v1/billing/checkout", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+// ─── Tenants ──────────────────────────────────────────────────────
+
+export interface Tenant {
+  id: string;
+  name: string;
+  slug: string;
+  plan: string;
+  createdAt: string;
+}
+
+export interface TenantUser {
+  id: string;
+  tenantId: string;
+  email: string;
+  name: string;
+  role: string;
+  createdAt: string;
+  lastLoginAt: string | null;
+}
+
+export async function fetchTenant(id: string): Promise<Tenant> {
+  return request<Tenant>(`/api/v1/tenants/${id}`);
+}
+
+export async function fetchTenantUsers(tenantId: string): Promise<TenantUser[]> {
+  return request<TenantUser[]>(`/api/v1/tenants/${tenantId}/users`);
+}
+
+export async function fetchTenantUsage(tenantId: string): Promise<TenantUsage> {
+  return request<TenantUsage>(`/api/v1/tenants/${tenantId}/usage`);
+}
+
+// ─── API Keys ─────────────────────────────────────────────────────
+
+export interface ApiKey {
+  id: string;
+  name: string;
+  keyPrefix: string;
+  scopes: string[];
+  ownerId: string;
+  createdAt: string;
+  lastUsedAt: string | null;
+  revoked: boolean;
+}
+
+export interface CreateApiKeyResponse {
+  id: string;
+  name: string;
+  key: string;
+}
+
+export async function fetchApiKeys(): Promise<ApiKey[]> {
+  return request<ApiKey[]>("/api/v1/keys");
+}
+
+export async function createApiKey(data: { name: string; scopes?: string[] }): Promise<CreateApiKeyResponse> {
+  return request<CreateApiKeyResponse>("/api/v1/keys", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+export async function revokeApiKey(id: string): Promise<void> {
+  return request<void>(`/api/v1/keys/${id}`, {
+    method: "DELETE",
+  });
+}

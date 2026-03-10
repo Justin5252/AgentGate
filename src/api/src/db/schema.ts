@@ -17,7 +17,47 @@ import type {
   PolicyEffect,
   AnomalyType,
   AnomalySeverity,
+  TenantPlan,
+  UserRole,
 } from "@agentgate/shared";
+
+// ─── Tenants ─────────────────────────────────────────────────────────
+
+export const tenants = pgTable("tenants", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  slug: text("slug").notNull().unique(),
+  plan: text("plan").notNull().default("free").$type<TenantPlan>(),
+  agentLimit: integer("agent_limit").notNull().default(5),
+  evalLimitPerMonth: integer("eval_limit_per_month").notNull().default(10000),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
+});
+
+// ─── Tenant Users ────────────────────────────────────────────────────
+
+export const tenantUsers = pgTable(
+  "tenant_users",
+  {
+    id: text("id").primaryKey(),
+    tenantId: text("tenant_id")
+      .notNull()
+      .references(() => tenants.id),
+    email: text("email").notNull(),
+    name: text("name").notNull(),
+    role: text("role").notNull().default("member").$type<UserRole>(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+    lastLoginAt: timestamp("last_login_at", { withTimezone: true }),
+  },
+  (table) => [
+    index("tenant_users_tenant_id_idx").on(table.tenantId),
+    index("tenant_users_email_idx").on(table.email),
+    uniqueIndex("tenant_users_tenant_email_idx").on(
+      table.tenantId,
+      table.email,
+    ),
+  ],
+);
 
 // ─── Agents ──────────────────────────────────────────────────────────
 
@@ -35,10 +75,12 @@ export const agents = pgTable(
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
     lastActiveAt: timestamp("last_active_at", { withTimezone: true }),
+    tenantId: text("tenant_id"),
   },
   (table) => [
     index("agents_owner_id_idx").on(table.ownerId),
     index("agents_status_idx").on(table.status),
+    index("agents_tenant_id_idx").on(table.tenantId),
   ],
 );
 
@@ -56,9 +98,11 @@ export const policies = pgTable(
     enabled: boolean("enabled").notNull().default(true),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
+    tenantId: text("tenant_id"),
   },
   (table) => [
     index("policies_enabled_idx").on(table.enabled),
+    index("policies_tenant_id_idx").on(table.tenantId),
   ],
 );
 
@@ -97,10 +141,12 @@ export const apiKeys = pgTable(
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
     lastUsedAt: timestamp("last_used_at", { withTimezone: true }),
     revoked: boolean("revoked").notNull().default(false),
+    tenantId: text("tenant_id"),
   },
   (table) => [
     uniqueIndex("api_keys_key_hash_idx").on(table.keyHash),
     index("api_keys_owner_id_idx").on(table.ownerId),
+    index("api_keys_tenant_id_idx").on(table.tenantId),
   ],
 );
 
@@ -212,6 +258,24 @@ export const anomalies = pgTable(
     index("anomalies_detected_at_idx").on(table.detectedAt),
   ],
 );
+
+// ─── Subscriptions ──────────────────────────────────────────────────
+
+export const subscriptions = pgTable("subscriptions", {
+  id: text("id").primaryKey(),
+  tenantId: text("tenant_id").notNull(),
+  stripeCustomerId: text("stripe_customer_id").notNull(),
+  stripeSubscriptionId: text("stripe_subscription_id"),
+  plan: text("plan").notNull().default("free"),
+  status: text("status").notNull().default("active"),
+  currentPeriodStart: timestamp("current_period_start", { withTimezone: true }),
+  currentPeriodEnd: timestamp("current_period_end", { withTimezone: true }),
+  cancelAtPeriodEnd: boolean("cancel_at_period_end").notNull().default(false),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+}, (table) => [
+  index("subscriptions_tenant_id_idx").on(table.tenantId),
+  index("subscriptions_stripe_customer_id_idx").on(table.stripeCustomerId),
+]);
 
 // ─── Agent Behavior Profiles ────────────────────────────────────────
 

@@ -279,6 +279,95 @@ export interface A2AGraph {
   edges: A2AGraphEdge[];
 }
 
+// ─── Multi-Tenancy & RBAC ─────────────────────────────────────────
+
+export type TenantPlan = "free" | "pro" | "enterprise";
+
+export interface Tenant {
+  id: string;
+  name: string;
+  slug: string;
+  plan: TenantPlan;
+  agentLimit: number;
+  evalLimitPerMonth: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateTenantRequest {
+  name: string;
+  slug: string;
+  plan?: TenantPlan;
+}
+
+export type UserRole = "owner" | "admin" | "member" | "auditor" | "viewer";
+
+export interface TenantUser {
+  id: string;
+  tenantId: string;
+  email: string;
+  name: string;
+  role: UserRole;
+  createdAt: string;
+  lastLoginAt: string | null;
+}
+
+export interface CreateUserRequest {
+  email: string;
+  name: string;
+  role?: UserRole;
+}
+
+export interface TenantUsage {
+  tenantId: string;
+  agentCount: number;
+  agentLimit: number;
+  evalCountThisMonth: number;
+  evalLimitPerMonth: number;
+  periodStart: string;
+  periodEnd: string;
+}
+
+// ─── Billing ──────────────────────────────────────────────────────
+
+export type BillingInterval = "monthly" | "yearly";
+
+export interface BillingPlan {
+  id: string;
+  name: string;
+  price: number;
+  interval: BillingInterval;
+  agentLimit: number;
+  evalLimit: number;
+  features: string[];
+}
+
+export interface Subscription {
+  id: string;
+  tenantId: string;
+  stripeCustomerId: string;
+  stripeSubscriptionId: string | null;
+  plan: string;
+  status: "active" | "past_due" | "canceled" | "trialing";
+  currentPeriodStart: string;
+  currentPeriodEnd: string;
+  cancelAtPeriodEnd: boolean;
+  createdAt: string;
+}
+
+export interface CreateCheckoutRequest {
+  tenantId: string;
+  plan: string;
+  interval?: BillingInterval;
+  successUrl: string;
+  cancelUrl: string;
+}
+
+export interface BillingPortalRequest {
+  tenantId: string;
+  returnUrl: string;
+}
+
 // ─── Error Codes ──────────────────────────────────────────────────
 
 export const ErrorCodes = {
@@ -296,6 +385,11 @@ export const ErrorCodes = {
   RATE_LIMITED: "RATE_LIMITED",
   ANOMALY_DETECTED: "ANOMALY_DETECTED",
   AGENT_THROTTLED: "AGENT_THROTTLED",
+  TENANT_NOT_FOUND: "TENANT_NOT_FOUND",
+  TENANT_LIMIT_REACHED: "TENANT_LIMIT_REACHED",
+  USER_NOT_FOUND: "USER_NOT_FOUND",
+  USER_ALREADY_EXISTS: "USER_ALREADY_EXISTS",
+  TENANT_SLUG_TAKEN: "TENANT_SLUG_TAKEN",
 } as const;
 
 export type ErrorCode = (typeof ErrorCodes)[keyof typeof ErrorCodes];
