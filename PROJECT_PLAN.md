@@ -67,14 +67,16 @@ A platform that lets companies:
 | Monorepo        | Turborepo                           |
 
 ### Phase 1 Deliverables
-- [ ] Agent identity CRUD API
-- [ ] Policy definition schema + evaluation engine
-- [ ] JS/TS SDK with middleware pattern
-- [ ] Python SDK
-- [ ] Dashboard with agent registry + policy editor
-- [ ] Local dev environment (Docker Compose)
-- [ ] Integration tests for policy engine
-- [ ] Landing page / docs site
+- [x] Agent identity CRUD API
+- [x] Policy definition schema + evaluation engine (31 tests)
+- [x] JS/TS SDK with middleware pattern (12 tests)
+- [x] Python SDK with LangChain/CrewAI middleware (14 tests)
+- [x] Dashboard with agent registry + policy editor (6 pages)
+- [x] Local dev environment (Docker Compose + Homebrew PostgreSQL)
+- [x] Integration tests for policy engine
+- [x] Landing page / marketing site
+- [x] API key authentication system
+- [x] Styled API root page with endpoint directory
 
 ---
 
@@ -106,11 +108,11 @@ A platform that lets companies:
 - REST fallback for any language
 
 ### Phase 2 Deliverables
-- [ ] 5+ platform integrations
-- [ ] Anomaly detection engine (v1)
-- [ ] A2A communication policies
-- [ ] Agent interaction graph visualization
-- [ ] Go + Java SDKs
+- [x] 5+ platform integrations (OpenAI, Anthropic, LangChain, CrewAI, Webhooks)
+- [x] Anomaly detection engine (v1) — 6 detection checks, behavior profiling
+- [x] A2A communication policies — channels, rate limiting, wildcard matching
+- [x] Agent interaction graph visualization — SVG graph in dashboard
+- [ ] Go + Java SDKs (deferred to Phase 3)
 - [ ] SOC 2 Type I certification started
 
 ---
