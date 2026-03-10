@@ -290,3 +290,121 @@ export const agentProfiles = pgTable("agent_profiles", {
   avgDenyRate: real("avg_deny_rate").default(0),
   lastUpdated: timestamp("last_updated", { withTimezone: true }).defaultNow(),
 });
+
+// ─── Compliance Frameworks ───────────────────────────────────────
+
+export const complianceFrameworks = pgTable(
+  "compliance_frameworks",
+  {
+    id: text("id").primaryKey(),
+    tenantId: text("tenant_id"),
+    frameworkId: text("framework_id").notNull(),
+    name: text("name").notNull(),
+    version: text("version").notNull(),
+    description: text("description").notNull(),
+    enabled: boolean("enabled").notNull().default(true),
+    lastEvaluatedAt: timestamp("last_evaluated_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+  },
+  (table) => [
+    index("compliance_frameworks_tenant_id_idx").on(table.tenantId),
+    index("compliance_frameworks_framework_id_idx").on(table.frameworkId),
+  ],
+);
+
+// ─── Compliance Controls ─────────────────────────────────────────
+
+export const complianceControls = pgTable(
+  "compliance_controls",
+  {
+    id: text("id").primaryKey(),
+    frameworkDbId: text("framework_db_id").notNull(),
+    frameworkId: text("framework_id").notNull(),
+    controlCode: text("control_code").notNull(),
+    title: text("title").notNull(),
+    description: text("description").notNull(),
+    category: text("category").notNull(),
+    status: text("status").notNull().default("not_evaluated"),
+    severity: text("severity").notNull().default("medium"),
+    automatable: boolean("automatable").notNull().default(false),
+    remediationSteps: jsonb("remediation_steps").$type<string[]>(),
+    lastEvaluatedAt: timestamp("last_evaluated_at", { withTimezone: true }),
+  },
+  (table) => [
+    index("compliance_controls_framework_db_id_idx").on(table.frameworkDbId),
+    index("compliance_controls_framework_id_idx").on(table.frameworkId),
+    index("compliance_controls_status_idx").on(table.status),
+  ],
+);
+
+// ─── Compliance Evidence ─────────────────────────────────────────
+
+export const complianceEvidence = pgTable(
+  "compliance_evidence",
+  {
+    id: text("id").primaryKey(),
+    controlId: text("control_id").notNull(),
+    frameworkId: text("framework_id").notNull(),
+    tenantId: text("tenant_id"),
+    type: text("type").notNull(),
+    title: text("title").notNull(),
+    description: text("description").notNull(),
+    sourceSystem: text("source_system").notNull(),
+    data: jsonb("data").default({}).$type<Record<string, unknown>>(),
+    verified: boolean("verified").notNull().default(false),
+    collectedAt: timestamp("collected_at", { withTimezone: true }).defaultNow(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }),
+  },
+  (table) => [
+    index("compliance_evidence_control_id_idx").on(table.controlId),
+    index("compliance_evidence_framework_id_idx").on(table.frameworkId),
+    index("compliance_evidence_tenant_id_idx").on(table.tenantId),
+  ],
+);
+
+// ─── Compliance Reports ──────────────────────────────────────────
+
+export const complianceReports = pgTable(
+  "compliance_reports",
+  {
+    id: text("id").primaryKey(),
+    frameworkId: text("framework_id").notNull(),
+    tenantId: text("tenant_id"),
+    title: text("title").notNull(),
+    generatedBy: text("generated_by").notNull(),
+    periodStart: timestamp("period_start", { withTimezone: true }).notNull(),
+    periodEnd: timestamp("period_end", { withTimezone: true }).notNull(),
+    overallScore: integer("overall_score").notNull(),
+    summary: text("summary").notNull(),
+    findings: jsonb("findings").default([]).$type<Record<string, unknown>[]>(),
+    status: text("status").notNull().default("draft"),
+    generatedAt: timestamp("generated_at", { withTimezone: true }).defaultNow(),
+  },
+  (table) => [
+    index("compliance_reports_framework_id_idx").on(table.frameworkId),
+    index("compliance_reports_tenant_id_idx").on(table.tenantId),
+  ],
+);
+
+// ─── Regulatory Updates ──────────────────────────────────────────
+
+export const regulatoryUpdates = pgTable(
+  "regulatory_updates",
+  {
+    id: text("id").primaryKey(),
+    frameworkId: text("framework_id").notNull(),
+    tenantId: text("tenant_id"),
+    title: text("title").notNull(),
+    description: text("description").notNull(),
+    effectiveDate: timestamp("effective_date", { withTimezone: true }).notNull(),
+    impactLevel: text("impact_level").notNull().default("medium"),
+    affectedControls: jsonb("affected_controls").default([]).$type<string[]>(),
+    source: text("source").notNull(),
+    publishedAt: timestamp("published_at", { withTimezone: true }).defaultNow(),
+    acknowledged: boolean("acknowledged").notNull().default(false),
+  },
+  (table) => [
+    index("regulatory_updates_framework_id_idx").on(table.frameworkId),
+    index("regulatory_updates_tenant_id_idx").on(table.tenantId),
+  ],
+);

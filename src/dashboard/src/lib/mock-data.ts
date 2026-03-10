@@ -520,3 +520,108 @@ export const mockTenantUsers: TenantUser[] = [
   { id: "user-2", tenantId: "tenant-1", email: "dev@company.com", name: "Dev Engineer", role: "admin", createdAt: "2026-02-10T00:00:00Z", lastLoginAt: "2026-03-10T17:00:00Z" },
   { id: "user-3", tenantId: "tenant-1", email: "auditor@company.com", name: "Security Auditor", role: "auditor", createdAt: "2026-03-01T00:00:00Z", lastLoginAt: "2026-03-09T10:00:00Z" },
 ];
+
+// ─── Compliance ─────────────────────────────────────────────────
+
+export interface MockFramework {
+  id: string;
+  frameworkId: string;
+  name: string;
+  version: string;
+  description: string;
+  totalControls: number;
+  passingControls: number;
+  failingControls: number;
+  warningControls: number;
+  complianceScore: number;
+  lastEvaluatedAt: string;
+  enabled: boolean;
+  createdAt: string;
+}
+
+export interface MockControl {
+  id: string;
+  frameworkId: string;
+  controlCode: string;
+  title: string;
+  description: string;
+  category: string;
+  status: string;
+  severity: string;
+  evidenceCount: number;
+  lastEvaluatedAt: string;
+  automatable: boolean;
+}
+
+export interface MockRegulatoryUpdate {
+  id: string;
+  frameworkId: string;
+  title: string;
+  description: string;
+  effectiveDate: string;
+  impactLevel: string;
+  affectedControls: string[];
+  source: string;
+  publishedAt: string;
+  acknowledged: boolean;
+}
+
+export const mockFrameworks: MockFramework[] = [
+  {
+    id: "fw-1", frameworkId: "soc2", name: "SOC 2 Type II", version: "2024",
+    description: "Service Organization Control 2 — Trust Services Criteria",
+    totalControls: 8, passingControls: 6, failingControls: 1, warningControls: 1,
+    complianceScore: 82, lastEvaluatedAt: "2026-03-10T18:00:00Z", enabled: true, createdAt: "2026-01-15T10:00:00Z",
+  },
+  {
+    id: "fw-2", frameworkId: "gdpr", name: "GDPR", version: "2024",
+    description: "General Data Protection Regulation — EU data privacy",
+    totalControls: 7, passingControls: 5, failingControls: 1, warningControls: 1,
+    complianceScore: 74, lastEvaluatedAt: "2026-03-10T18:00:00Z", enabled: true, createdAt: "2026-02-01T10:00:00Z",
+  },
+  {
+    id: "fw-3", frameworkId: "hipaa", name: "HIPAA", version: "2024",
+    description: "Health Insurance Portability and Accountability Act",
+    totalControls: 6, passingControls: 4, failingControls: 1, warningControls: 1,
+    complianceScore: 68, lastEvaluatedAt: "2026-03-10T18:00:00Z", enabled: true, createdAt: "2026-02-10T10:00:00Z",
+  },
+  {
+    id: "fw-4", frameworkId: "iso27001", name: "ISO 27001:2022", version: "2022",
+    description: "Information Security Management System standard",
+    totalControls: 8, passingControls: 5, failingControls: 2, warningControls: 1,
+    complianceScore: 71, lastEvaluatedAt: "2026-03-10T18:00:00Z", enabled: false, createdAt: "2026-02-20T10:00:00Z",
+  },
+];
+
+export const mockComplianceControls: MockControl[] = [
+  { id: "ctrl-1", frameworkId: "soc2", controlCode: "CC6.1", title: "Agent Identity Management", description: "All AI agents are registered with unique identities", category: "Logical Access", status: "passing", severity: "high", evidenceCount: 3, lastEvaluatedAt: "2026-03-10T18:00:00Z", automatable: true },
+  { id: "ctrl-2", frameworkId: "soc2", controlCode: "CC6.2", title: "Access Control Policies", description: "Granular policies govern agent permissions", category: "Logical Access", status: "passing", severity: "high", evidenceCount: 2, lastEvaluatedAt: "2026-03-10T18:00:00Z", automatable: true },
+  { id: "ctrl-3", frameworkId: "soc2", controlCode: "CC6.3", title: "Authentication Controls", description: "API key auth with SHA-256 hashing", category: "Logical Access", status: "passing", severity: "critical", evidenceCount: 4, lastEvaluatedAt: "2026-03-10T18:00:00Z", automatable: true },
+  { id: "ctrl-4", frameworkId: "soc2", controlCode: "CC7.1", title: "Audit Logging", description: "All agent actions logged with full context", category: "Monitoring", status: "passing", severity: "critical", evidenceCount: 5, lastEvaluatedAt: "2026-03-10T18:00:00Z", automatable: true },
+  { id: "ctrl-5", frameworkId: "soc2", controlCode: "CC7.2", title: "Anomaly Detection", description: "Automated detection of unusual agent behavior", category: "Monitoring", status: "passing", severity: "high", evidenceCount: 2, lastEvaluatedAt: "2026-03-10T18:00:00Z", automatable: true },
+  { id: "ctrl-6", frameworkId: "soc2", controlCode: "CC7.3", title: "Incident Response", description: "Automated agent suspension on critical anomalies", category: "Monitoring", status: "warning", severity: "high", evidenceCount: 1, lastEvaluatedAt: "2026-03-10T18:00:00Z", automatable: false },
+  { id: "ctrl-7", frameworkId: "soc2", controlCode: "CC8.1", title: "Data Encryption", description: "All data encrypted in transit and at rest", category: "Encryption", status: "passing", severity: "critical", evidenceCount: 2, lastEvaluatedAt: "2026-03-10T18:00:00Z", automatable: true },
+  { id: "ctrl-8", frameworkId: "soc2", controlCode: "CC9.1", title: "Third-Party Risk Assessment", description: "External integrations assessed for security", category: "Vendor Management", status: "failing", severity: "high", evidenceCount: 0, lastEvaluatedAt: "2026-03-10T18:00:00Z", automatable: false },
+  // GDPR controls
+  { id: "ctrl-9", frameworkId: "gdpr", controlCode: "Art.5", title: "Data Processing Principles", description: "Agents process data lawfully and transparently", category: "Principles", status: "passing", severity: "critical", evidenceCount: 3, lastEvaluatedAt: "2026-03-10T18:00:00Z", automatable: true },
+  { id: "ctrl-10", frameworkId: "gdpr", controlCode: "Art.22", title: "Automated Decision-Making", description: "Human oversight for significant agent decisions", category: "Data Subject Rights", status: "passing", severity: "high", evidenceCount: 2, lastEvaluatedAt: "2026-03-10T18:00:00Z", automatable: true },
+  { id: "ctrl-11", frameworkId: "gdpr", controlCode: "Art.25", title: "Privacy by Design", description: "Privacy-by-design in agent architecture", category: "Controller Obligations", status: "passing", severity: "high", evidenceCount: 1, lastEvaluatedAt: "2026-03-10T18:00:00Z", automatable: true },
+  { id: "ctrl-12", frameworkId: "gdpr", controlCode: "Art.30", title: "Records of Processing", description: "Records of all agent data processing", category: "Controller Obligations", status: "passing", severity: "high", evidenceCount: 4, lastEvaluatedAt: "2026-03-10T18:00:00Z", automatable: true },
+  { id: "ctrl-13", frameworkId: "gdpr", controlCode: "Art.32", title: "Security of Processing", description: "Appropriate security measures for data handling", category: "Security", status: "passing", severity: "critical", evidenceCount: 3, lastEvaluatedAt: "2026-03-10T18:00:00Z", automatable: true },
+  { id: "ctrl-14", frameworkId: "gdpr", controlCode: "Art.33", title: "Breach Notification", description: "Detect and report breaches within 72 hours", category: "Breach", status: "warning", severity: "critical", evidenceCount: 1, lastEvaluatedAt: "2026-03-10T18:00:00Z", automatable: true },
+  { id: "ctrl-15", frameworkId: "gdpr", controlCode: "Art.35", title: "Data Protection Impact Assessment", description: "DPIA for high-risk agent processing", category: "Impact Assessment", status: "failing", severity: "high", evidenceCount: 0, lastEvaluatedAt: "2026-03-10T18:00:00Z", automatable: false },
+];
+
+export const mockRegulatoryUpdates: MockRegulatoryUpdate[] = [
+  { id: "reg-1", frameworkId: "eu_ai_act", title: "EU AI Act — High-Risk AI Systems Requirements", description: "New requirements for AI agent transparency and human oversight take effect.", effectiveDate: "2026-08-01T00:00:00Z", impactLevel: "high", affectedControls: ["Art.9", "Art.14"], source: "Official Journal of the EU", publishedAt: "2026-02-15T00:00:00Z", acknowledged: false },
+  { id: "reg-2", frameworkId: "gdpr", title: "GDPR — Updated Guidance on AI Decision-Making", description: "European Data Protection Board issues guidance on automated decision-making by AI agents.", effectiveDate: "2026-06-01T00:00:00Z", impactLevel: "medium", affectedControls: ["Art.22", "Art.35"], source: "EDPB Guidelines", publishedAt: "2026-01-20T00:00:00Z", acknowledged: true },
+  { id: "reg-3", frameworkId: "soc2", title: "AICPA — AI Agent Trust Services Criteria Supplement", description: "New supplemental criteria for organizations using AI agents in service delivery.", effectiveDate: "2026-07-01T00:00:00Z", impactLevel: "medium", affectedControls: ["CC6.1", "CC6.2", "CC7.1"], source: "AICPA", publishedAt: "2026-03-01T00:00:00Z", acknowledged: false },
+];
+
+export const mockScoreHistory = [
+  { date: "2026-01-15", score: 45 },
+  { date: "2026-01-30", score: 52 },
+  { date: "2026-02-15", score: 61 },
+  { date: "2026-02-28", score: 68 },
+  { date: "2026-03-10", score: 82 },
+];

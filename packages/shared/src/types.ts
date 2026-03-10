@@ -368,6 +368,117 @@ export interface BillingPortalRequest {
   returnUrl: string;
 }
 
+// ─── Compliance Autopilot ────────────────────────────────────────
+
+export type ComplianceFrameworkId = "soc2" | "iso27001" | "hipaa" | "gdpr" | "pci_dss" | "eu_ai_act";
+
+export type ControlStatus = "passing" | "failing" | "warning" | "not_evaluated" | "not_applicable";
+
+export type EvidenceType = "automatic" | "manual" | "agent_audit" | "policy_snapshot" | "system_log";
+
+export interface ComplianceFramework {
+  id: string;
+  frameworkId: ComplianceFrameworkId;
+  name: string;
+  version: string;
+  description: string;
+  totalControls: number;
+  passingControls: number;
+  failingControls: number;
+  warningControls: number;
+  complianceScore: number;
+  lastEvaluatedAt: string;
+  enabled: boolean;
+  createdAt: string;
+}
+
+export interface ComplianceControl {
+  id: string;
+  frameworkId: ComplianceFrameworkId;
+  controlCode: string;
+  title: string;
+  description: string;
+  category: string;
+  status: ControlStatus;
+  severity: "low" | "medium" | "high" | "critical";
+  evidenceCount: number;
+  lastEvaluatedAt: string;
+  remediationSteps?: string[];
+  automatable: boolean;
+}
+
+export interface ComplianceEvidence {
+  id: string;
+  controlId: string;
+  frameworkId: ComplianceFrameworkId;
+  type: EvidenceType;
+  title: string;
+  description: string;
+  sourceSystem: string;
+  collectedAt: string;
+  expiresAt: string | null;
+  data: Record<string, unknown>;
+  verified: boolean;
+}
+
+export interface ComplianceReport {
+  id: string;
+  frameworkId: ComplianceFrameworkId;
+  title: string;
+  generatedAt: string;
+  generatedBy: string;
+  periodStart: string;
+  periodEnd: string;
+  overallScore: number;
+  summary: string;
+  findings: ComplianceFinding[];
+  status: "draft" | "final" | "shared";
+}
+
+export interface ComplianceFinding {
+  controlCode: string;
+  controlTitle: string;
+  status: ControlStatus;
+  finding: string;
+  recommendation: string;
+  severity: "low" | "medium" | "high" | "critical";
+}
+
+export interface ComplianceScoreHistory {
+  frameworkId: ComplianceFrameworkId;
+  scores: { date: string; score: number }[];
+}
+
+export interface RegulatoryUpdate {
+  id: string;
+  frameworkId: ComplianceFrameworkId;
+  title: string;
+  description: string;
+  effectiveDate: string;
+  impactLevel: "low" | "medium" | "high";
+  affectedControls: string[];
+  source: string;
+  publishedAt: string;
+  acknowledged: boolean;
+}
+
+export interface GapAnalysis {
+  frameworkId: ComplianceFrameworkId;
+  totalControls: number;
+  assessed: number;
+  gaps: GapItem[];
+  overallReadiness: number;
+}
+
+export interface GapItem {
+  controlCode: string;
+  controlTitle: string;
+  currentState: string;
+  requiredState: string;
+  effort: "low" | "medium" | "high";
+  priority: number;
+}
+
 // ─── Error Codes ──────────────────────────────────────────────────
 
 export const ErrorCodes = {
@@ -390,6 +501,10 @@ export const ErrorCodes = {
   USER_NOT_FOUND: "USER_NOT_FOUND",
   USER_ALREADY_EXISTS: "USER_ALREADY_EXISTS",
   TENANT_SLUG_TAKEN: "TENANT_SLUG_TAKEN",
+  FRAMEWORK_NOT_FOUND: "FRAMEWORK_NOT_FOUND",
+  CONTROL_NOT_FOUND: "CONTROL_NOT_FOUND",
+  EVIDENCE_NOT_FOUND: "EVIDENCE_NOT_FOUND",
+  REPORT_NOT_FOUND: "REPORT_NOT_FOUND",
 } as const;
 
 export type ErrorCode = (typeof ErrorCodes)[keyof typeof ErrorCodes];

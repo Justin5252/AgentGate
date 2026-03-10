@@ -27,6 +27,7 @@ const plans = [
       "1M evaluations/mo",
       "All integrations",
       "Anomaly detection",
+      "Compliance add-on available",
       "Email support",
     ],
     cta: "Start Pro Trial",
@@ -42,7 +43,7 @@ const plans = [
       "SSO / SAML",
       "Custom SLAs",
       "Dedicated CSM",
-      "Compliance module",
+      "Compliance Autopilot included",
     ],
     cta: "Contact Sales",
     popular: false,
@@ -151,6 +152,55 @@ export default function Pricing() {
               </a>
             </GlowCard>
           ))}
+        </div>
+
+        {/* Compliance Add-on */}
+        <div
+          className="mt-8 rounded-xl border p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
+          style={{ background: "var(--bg-card)", borderColor: "var(--border)" }}
+        >
+          <div>
+            <div className="flex items-center gap-2 mb-1">
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="var(--teal)"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                <polyline points="9 12 11 14 15 10" />
+              </svg>
+              <h4 className="font-semibold text-white">Compliance Autopilot</h4>
+              <span
+                className="text-xs px-2 py-0.5 rounded-full font-medium"
+                style={{
+                  background: "rgba(6,214,160,0.1)",
+                  color: "var(--teal)",
+                  border: "1px solid rgba(6,214,160,0.3)",
+                }}
+              >
+                Add-on
+              </span>
+            </div>
+            <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
+              6 frameworks, continuous monitoring, auto-evidence collection, one-click reports, regulatory alerts.
+              Available on Pro and included with Enterprise.
+            </p>
+          </div>
+          <div className="flex-shrink-0 text-right">
+            <div className="text-2xl font-bold text-white">$299<span className="text-sm font-normal" style={{ color: "var(--text-muted)" }}>/mo</span></div>
+            <a
+              href="#compliance"
+              className="text-xs font-medium transition-colors hover:text-white"
+              style={{ color: "var(--blue)" }}
+            >
+              Learn more &rarr;
+            </a>
+          </div>
         </div>
       </div>
     </section>

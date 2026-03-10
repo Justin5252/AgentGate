@@ -187,6 +187,21 @@ Leverage the audit trail, policy engine, and integrations already built in Agent
 - Impact analysis: "This new regulation affects these 3 systems and 12 agents"
 - Auto-update policies when regulations change
 
+### Phase 4 Deliverables
+- [x] Compliance engine — 6 frameworks (SOC 2, ISO 27001, HIPAA, GDPR, PCI DSS, EU AI Act) with 42 real controls
+- [x] Control evaluation — live checks against AgentGate platform state (agents, policies, audit logs, anomaly detection, A2A channels)
+- [x] Evidence collection API — manual + automatic evidence with immutable vault
+- [x] One-click report generation — auto-generated compliance reports with findings
+- [x] Gap analysis — assess current state vs. framework requirements
+- [x] Score tracking — compliance score trend over time
+- [x] Regulatory intelligence — regulatory update tracker with acknowledge workflow
+- [x] 16 compliance API endpoints — CRUD for frameworks, controls, evidence, reports, gaps, updates
+- [x] Dashboard compliance page — score rings, framework cards, controls table, trend chart, regulatory alerts
+- [x] Landing page section — Compliance Autopilot with 6 framework cards, dashboard mockup, capabilities, $299/mo add-on pricing
+- [ ] AI-generated remediation recommendations
+- [ ] Auditor portal (read-only access for external auditors)
+- [ ] Auto-update policies when regulations change
+
 ### 4.5 Why This Works as Phase 4
 - AgentGate's audit trail is already 80% of what compliance needs
 - Same customers buying agent security also need compliance tooling
@@ -269,4 +284,4 @@ Leverage the audit trail, policy engine, and integrations already built in Agent
 ---
 
 *Last updated: March 10, 2026*
-*Status: Planning*
+*Status: Phase 4 complete — all core features built*

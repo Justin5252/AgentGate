@@ -38,6 +38,13 @@ export default function Navbar() {
             Features
           </a>
           <a
+            href="#compliance"
+            className="text-sm transition-colors hover:text-white"
+            style={{ color: "var(--text-secondary)" }}
+          >
+            Compliance
+          </a>
+          <a
             href="#pricing"
             className="text-sm transition-colors hover:text-white"
             style={{ color: "var(--text-secondary)" }}
@@ -102,6 +109,14 @@ export default function Navbar() {
               onClick={() => setMobileOpen(false)}
             >
               Features
+            </a>
+            <a
+              href="#compliance"
+              className="text-sm"
+              style={{ color: "var(--text-secondary)" }}
+              onClick={() => setMobileOpen(false)}
+            >
+              Compliance
             </a>
             <a
               href="#pricing"

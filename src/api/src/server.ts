@@ -10,6 +10,7 @@ import { auditRoutes } from "./routes/audit.js";
 import { healthRoutes } from "./routes/health.js";
 import { apiKeyRoutes } from "./routes/api-keys.js";
 import { a2aRoutes } from "./routes/a2a.js";
+import { complianceRoutes } from "./routes/compliance.js";
 import { anomalyRoutes } from "./routes/anomalies.js";
 import { billingRoutes } from "./routes/billing.js";
 import { tenantRoutes } from "./routes/tenants.js";
@@ -17,6 +18,7 @@ import { authMiddleware } from "./middleware/auth.js";
 import { AnomalyDetector } from "./services/anomaly-detector.js";
 import { BillingService } from "./services/billing.js";
 import { UsageTracker } from "./services/usage-tracker.js";
+import { ComplianceService } from "./services/compliance.js";
 import type { Database } from "./db/index.js";
 
 declare module "fastify" {
@@ -26,6 +28,7 @@ declare module "fastify" {
     anomalyDetector: AnomalyDetector;
     billingService: BillingService;
     usageTracker: UsageTracker;
+    complianceService: ComplianceService;
   }
 }
 
@@ -54,12 +57,14 @@ export async function buildServer(options: BuildServerOptions) {
   const anomalyDetector = new AnomalyDetector(db);
   const billingService = new BillingService(db);
   const usageTracker = new UsageTracker(db);
+  const complianceService = new ComplianceService(db);
 
   server.decorate("db", db);
   server.decorate("evaluator", evaluator);
   server.decorate("anomalyDetector", anomalyDetector);
   server.decorate("billingService", billingService);
   server.decorate("usageTracker", usageTracker);
+  server.decorate("complianceService", complianceService);
 
   // Register auth middleware (must come before routes)
   await server.register(authMiddleware);
@@ -150,6 +155,18 @@ export async function buildServer(options: BuildServerOptions) {
       </div>
     </div>
 
+    <div class="section-title">Compliance</div>
+    <div class="endpoints">
+      <div class="endpoint">
+        <span class="endpoint-name"><span class="method">GET</span> Frameworks</span>
+        <span class="endpoint-path"><a href="/api/v1/compliance">/api/v1/compliance</a></span>
+      </div>
+      <div class="endpoint">
+        <span class="endpoint-name"><span class="method">GET</span> Regulatory Updates</span>
+        <span class="endpoint-path"><a href="/api/v1/compliance/regulatory-updates">/api/v1/compliance/regulatory-updates</a></span>
+      </div>
+    </div>
+
     <div class="section-title">Management</div>
     <div class="endpoints">
       <div class="endpoint">
@@ -184,6 +201,7 @@ export async function buildServer(options: BuildServerOptions) {
         a2a: "/api/v1/a2a",
         keys: "/api/v1/keys",
         tenants: "/api/v1/tenants",
+        compliance: "/api/v1/compliance",
       },
     };
   });
@@ -199,6 +217,7 @@ export async function buildServer(options: BuildServerOptions) {
   await server.register(anomalyRoutes, { prefix: "/api/v1/anomalies" });
   await server.register(billingRoutes, { prefix: "/api/v1/billing" });
   await server.register(tenantRoutes, { prefix: "/api/v1/tenants" });
+  await server.register(complianceRoutes, { prefix: "/api/v1/compliance" });
 
   return server;
 }
