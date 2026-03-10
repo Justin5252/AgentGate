@@ -149,11 +149,16 @@ A platform that lets companies:
 - Content: blog posts, case studies, "State of AI Agent Security" report
 
 ### Phase 3 Deliverables
-- [ ] Multi-tenant production deployment
-- [ ] Self-serve signup + billing (Stripe)
-- [ ] Free/Pro/Enterprise tier implementation
+- [x] Multi-tenant architecture — tenant CRUD, user management, usage tracking, tenant_id scoping
+- [x] Self-serve signup + billing (Stripe) — checkout sessions, billing portal, webhooks, graceful degradation
+- [x] Free/Pro/Enterprise tier implementation — plan limits, usage bars, upgrade flow in dashboard
+- [x] Go SDK — zero dependencies, generics, retry logic, 17 tests
+- [x] Enterprise dashboard — Settings page (org/API keys/team), Billing page (plans/usage)
+- [x] Role-based dashboard access (admin, auditor, viewer) — RBAC types + UI
+- [ ] SSO/SAML support
 - [ ] SOC 2 Type II certification
-- [ ] 10+ enterprise design partners
+- [ ] Developer portal with interactive docs
+- [ ] On-premise / private cloud deployment
 - [ ] Public launch
 
 ---
