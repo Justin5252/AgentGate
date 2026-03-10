@@ -9,13 +9,17 @@ import { authorizeRoutes } from "./routes/authorize.js";
 import { auditRoutes } from "./routes/audit.js";
 import { healthRoutes } from "./routes/health.js";
 import { apiKeyRoutes } from "./routes/api-keys.js";
+import { a2aRoutes } from "./routes/a2a.js";
+import { anomalyRoutes } from "./routes/anomalies.js";
 import { authMiddleware } from "./middleware/auth.js";
+import { AnomalyDetector } from "./services/anomaly-detector.js";
 import type { Database } from "./db/index.js";
 
 declare module "fastify" {
   interface FastifyInstance {
     db: Database;
     evaluator: PolicyEvaluator;
+    anomalyDetector: AnomalyDetector;
   }
 }
 
@@ -41,8 +45,11 @@ export async function buildServer(options: BuildServerOptions) {
   const { db } = createDb(options.databaseUrl);
   const evaluator = new PolicyEvaluator();
 
+  const anomalyDetector = new AnomalyDetector(db);
+
   server.decorate("db", db);
   server.decorate("evaluator", evaluator);
+  server.decorate("anomalyDetector", anomalyDetector);
 
   // Register auth middleware (must come before routes)
   await server.register(authMiddleware);
@@ -54,6 +61,8 @@ export async function buildServer(options: BuildServerOptions) {
   await server.register(policyRoutes, { prefix: "/api/v1/policies" });
   await server.register(authorizeRoutes, { prefix: "/api/v1" });
   await server.register(auditRoutes, { prefix: "/api/v1/audit" });
+  await server.register(a2aRoutes, { prefix: "/api/v1/a2a" });
+  await server.register(anomalyRoutes, { prefix: "/api/v1/anomalies" });
 
   return server;
 }

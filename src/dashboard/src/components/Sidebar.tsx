@@ -41,6 +41,28 @@ const navItems = [
       </svg>
     ),
   },
+  {
+    label: "Anomalies",
+    href: "/anomalies",
+    icon: (
+      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+      </svg>
+    ),
+  },
+  {
+    label: "A2A Graph",
+    href: "/a2a",
+    icon: (
+      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M7.5 21L3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5" />
+        <circle cx="5" cy="5" r="2" />
+        <circle cx="19" cy="19" r="2" />
+        <circle cx="5" cy="19" r="2" />
+        <circle cx="19" cy="5" r="2" />
+      </svg>
+    ),
+  },
 ];
 
 export function Sidebar() {

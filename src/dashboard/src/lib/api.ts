@@ -123,3 +123,106 @@ export interface AuditStats {
 export async function fetchAuditStats(): Promise<AuditStats> {
   return request<AuditStats>("/api/v1/audit/stats");
 }
+
+// ─── Anomalies ──────────────────────────────────────────────────────
+
+export interface Anomaly {
+  id: string;
+  agentId: string;
+  type: string;
+  severity: "critical" | "high" | "medium" | "low";
+  description: string;
+  details: Record<string, unknown>;
+  detectedAt: string;
+  resolved: boolean;
+}
+
+export interface AnomalyStats {
+  total: number;
+  byType: Record<string, number>;
+  bySeverity: Record<string, number>;
+  unresolvedCount: number;
+}
+
+export async function fetchAnomalies(
+  params?: { agentId?: string; type?: string; severity?: string; resolved?: string; limit?: number; offset?: number }
+): Promise<Anomaly[]> {
+  return request<Anomaly[]>(
+    `/api/v1/anomalies${toQueryString(params as Record<string, unknown>)}`
+  );
+}
+
+export async function fetchAnomalyStats(): Promise<AnomalyStats> {
+  return request<AnomalyStats>("/api/v1/anomalies/stats");
+}
+
+// ─── A2A ────────────────────────────────────────────────────────────
+
+export interface A2ANode {
+  agentId: string;
+  agentName: string;
+  incomingCount: number;
+  outgoingCount: number;
+}
+
+export interface A2AEdge {
+  source: string;
+  target: string;
+  requestCount: number;
+  lastCommunication: string;
+  status: "active" | "blocked";
+}
+
+export interface A2AGraph {
+  nodes: A2ANode[];
+  edges: A2AEdge[];
+}
+
+export interface A2AChannel {
+  id: string;
+  sourceAgentId: string;
+  targetAgentId: string;
+  allowedActions: string[];
+  rateLimit: number;
+  enabled: boolean;
+  lastCommunication: string;
+}
+
+export interface A2ACommunication {
+  id: string;
+  sourceAgentId: string;
+  targetAgentId: string;
+  action: string;
+  timestamp: string;
+  status: string;
+}
+
+export interface A2AStats {
+  activeChannels: number;
+  totalCommunications24h: number;
+  blockedChannels: number;
+}
+
+export async function fetchA2AGraph(): Promise<A2AGraph> {
+  return request<A2AGraph>("/api/v1/a2a/graph");
+}
+
+export async function fetchA2AChannels(
+  params?: { limit?: number; offset?: number }
+): Promise<A2AChannel[]> {
+  return request<A2AChannel[]>(
+    `/api/v1/a2a/channels${toQueryString(params as Record<string, unknown>)}`
+  );
+}
+
+export async function fetchA2ACommunications(
+  params?: { sourceAgentId?: string; targetAgentId?: string; limit?: number; offset?: number }
+): Promise<A2ACommunication[]> {
+  return request<A2ACommunication[]>(
+    `/api/v1/a2a/communications${toQueryString(params as Record<string, unknown>)}`
+  );
+}
+
+export async function fetchA2AStats(): Promise<A2AStats> {
+  return request<A2AStats>("/api/v1/a2a/stats");
+}

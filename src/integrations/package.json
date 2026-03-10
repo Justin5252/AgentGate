@@ -1,0 +1,29 @@
+{
+  "name": "@agentgate/integrations",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js" },
+    "./openai": { "types": "./dist/openai.d.ts", "import": "./dist/openai.js" },
+    "./anthropic": { "types": "./dist/anthropic.d.ts", "import": "./dist/anthropic.js" },
+    "./langchain": { "types": "./dist/langchain.d.ts", "import": "./dist/langchain.js" },
+    "./crewai": { "types": "./dist/crewai.d.ts", "import": "./dist/crewai.js" },
+    "./webhook": { "types": "./dist/webhook.d.ts", "import": "./dist/webhook.js" }
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "test": "node --test dist/**/*.test.js"
+  },
+  "dependencies": {
+    "@agentgate/shared": "*",
+    "@agentgate/sdk": "*"
+  },
+  "devDependencies": {
+    "typescript": "latest",
+    "@types/node": "latest"
+  }
+}

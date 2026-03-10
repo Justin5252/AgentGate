@@ -2,40 +2,49 @@
 
 import { useEffect, useState } from "react";
 import type { AgentIdentity, Policy, AuditEntry } from "@agentgate/shared";
-import { fetchAgents, fetchPolicies, fetchAuditLogs, fetchAuditStats } from "@/lib/api";
-import type { AuditStats } from "@/lib/api";
-import { mockAgents, mockPolicies, mockAuditEntries, mockAuditStats } from "@/lib/mock-data";
+import { fetchAgents, fetchPolicies, fetchAuditLogs, fetchAuditStats, fetchAnomalies, fetchAnomalyStats } from "@/lib/api";
+import type { AuditStats, Anomaly, AnomalyStats } from "@/lib/api";
+import { mockAgents, mockPolicies, mockAuditEntries, mockAuditStats, mockAnomalies, mockAnomalyStats } from "@/lib/mock-data";
 import { StatCard, StatCardSkeleton } from "@/components/StatCard";
 import { AuditFeed, AuditFeedSkeleton } from "@/components/AuditFeed";
+import Link from "next/link";
 
 export default function DashboardPage() {
   const [agents, setAgents] = useState<AgentIdentity[]>([]);
   const [policies, setPolicies] = useState<Policy[]>([]);
   const [auditEntries, setAuditEntries] = useState<AuditEntry[]>([]);
   const [auditStats, setAuditStats] = useState<AuditStats | null>(null);
+  const [anomalies, setAnomalies] = useState<Anomaly[]>([]);
+  const [anomalyStats, setAnomalyStats] = useState<AnomalyStats | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function loadData() {
       try {
-        const [agentsData, policiesData, entriesData, statsData] =
+        const [agentsData, policiesData, entriesData, statsData, anomalyData, anomalyStatsData] =
           await Promise.all([
             fetchAgents().catch(() => null),
             fetchPolicies().catch(() => null),
             fetchAuditLogs({ limit: 20 }).catch(() => null),
             fetchAuditStats().catch(() => null),
+            fetchAnomalies({ limit: 3 }).catch(() => null),
+            fetchAnomalyStats().catch(() => null),
           ]);
 
         setAgents(agentsData ?? mockAgents);
         setPolicies(policiesData ?? mockPolicies);
         setAuditEntries(entriesData ?? mockAuditEntries);
         setAuditStats(statsData ?? mockAuditStats);
+        setAnomalies(anomalyData ?? mockAnomalies.slice(0, 3));
+        setAnomalyStats(anomalyStatsData ?? mockAnomalyStats);
       } catch {
         // Fall back to mock data
         setAgents(mockAgents);
         setPolicies(mockPolicies);
         setAuditEntries(mockAuditEntries);
         setAuditStats(mockAuditStats);
+        setAnomalies(mockAnomalies.slice(0, 3));
+        setAnomalyStats(mockAnomalyStats);
       } finally {
         setLoading(false);
       }
@@ -69,13 +78,13 @@ export default function DashboardPage() {
 
       {/* Stat Cards */}
       {loading ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {Array.from({ length: 4 }).map((_, i) => (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+          {Array.from({ length: 5 }).map((_, i) => (
             <StatCardSkeleton key={i} />
           ))}
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
           <StatCard
             title="Total Agents"
             value={agents.length}
@@ -99,6 +108,12 @@ export default function DashboardPage() {
             value={`${denyRate.toFixed(1)}%`}
             subtitle={`${auditStats?.denyCount ?? 0} denied`}
             color={denyRateColor}
+          />
+          <StatCard
+            title="Anomalies"
+            value={anomalyStats?.unresolvedCount ?? 0}
+            subtitle="Unresolved"
+            color={(anomalyStats?.unresolvedCount ?? 0) > 0 ? "red" : "teal"}
           />
         </div>
       )}
@@ -175,6 +190,45 @@ export default function DashboardPage() {
           </div>
         </div>
       </div>
+
+      {/* Recent Anomalies */}
+      <div>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-semibold" style={{ color: "var(--text-primary)" }}>
+            Recent Anomalies
+          </h2>
+          <Link
+            href="/anomalies"
+            className="text-xs font-medium transition-colors"
+            style={{ color: "var(--blue)" }}
+          >
+            View all &rarr;
+          </Link>
+        </div>
+        {loading ? (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div
+                key={i}
+                className="rounded-xl border p-4"
+                style={{ background: "var(--bg-card)", borderColor: "var(--border)" }}
+              >
+                <div className="space-y-3">
+                  <div className="skeleton h-4 w-16 rounded" />
+                  <div className="skeleton h-3 w-full" />
+                  <div className="skeleton h-3 w-24" />
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {anomalies.slice(0, 3).map((anomaly) => (
+              <RecentAnomalyCard key={anomaly.id} anomaly={anomaly} />
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
@@ -214,5 +268,63 @@ function DecisionBar({
         />
       </div>
     </div>
+  );
+}
+
+const anomalySeverityStyles: Record<string, { bg: string; text: string }> = {
+  critical: { bg: "rgba(239, 68, 68, 0.15)", text: "var(--danger)" },
+  high: { bg: "rgba(239, 68, 68, 0.10)", text: "var(--danger)" },
+  medium: { bg: "rgba(245, 158, 11, 0.12)", text: "var(--warning)" },
+  low: { bg: "rgba(59, 130, 246, 0.12)", text: "var(--blue)" },
+};
+
+function formatAnomalyTime(dateStr: string): string {
+  const d = new Date(dateStr);
+  const now = new Date();
+  const diffMs = now.getTime() - d.getTime();
+  const diffMins = Math.floor(diffMs / 60000);
+
+  if (diffMins < 1) return "Just now";
+  if (diffMins < 60) return `${diffMins}m ago`;
+  if (diffMins < 1440) return `${Math.floor(diffMins / 60)}h ago`;
+  return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+}
+
+function RecentAnomalyCard({ anomaly }: { anomaly: Anomaly }) {
+  const severity = anomalySeverityStyles[anomaly.severity] ?? anomalySeverityStyles.low;
+
+  return (
+    <Link href="/anomalies">
+      <div
+        className="rounded-xl border p-4 transition-all duration-200 group"
+        style={{ background: "var(--bg-card)", borderColor: "var(--border)" }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.borderColor = severity.text;
+          e.currentTarget.style.boxShadow = `0 0 16px ${severity.text}15`;
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.borderColor = "var(--border)";
+          e.currentTarget.style.boxShadow = "none";
+        }}
+      >
+        <div className="flex items-center gap-2 mb-2">
+          <span
+            className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider"
+            style={{ background: severity.bg, color: severity.text }}
+          >
+            {anomaly.severity}
+          </span>
+          <span className="text-[11px] tabular-nums ml-auto" style={{ color: "var(--text-muted)" }}>
+            {formatAnomalyTime(anomaly.detectedAt)}
+          </span>
+        </div>
+        <p className="text-xs leading-relaxed line-clamp-2" style={{ color: "var(--text-secondary)" }}>
+          {anomaly.description}
+        </p>
+        <div className="mt-2 text-xs font-mono" style={{ color: "var(--blue)" }}>
+          {anomaly.agentId}
+        </div>
+      </div>
+    </Link>
   );
 }

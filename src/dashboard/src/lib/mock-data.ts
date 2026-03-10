@@ -1,5 +1,5 @@
 import type { AgentIdentity, Policy, AuditEntry } from "@agentgate/shared";
-import type { AuditStats } from "./api";
+import type { AuditStats, Anomaly, AnomalyStats, A2AGraph, A2AChannel, A2AStats } from "./api";
 
 export const mockAgents: AgentIdentity[] = [
   {
@@ -303,4 +303,156 @@ export const mockAuditStats: AuditStats = {
   denyCount: 112,
   escalateCount: 46,
   avgDurationMs: 3.2,
+};
+
+// ─── Anomalies ──────────────────────────────────────────────────────
+
+export const mockAnomalies: Anomaly[] = [
+  {
+    id: "anom-1",
+    agentId: "agent-1",
+    type: "burst_activity",
+    severity: "high",
+    description: "Agent exceeded 5x normal request rate in 5-minute window",
+    details: { requestCount: 340, normalRate: 45 },
+    detectedAt: "2026-03-10T19:30:00Z",
+    resolved: false,
+  },
+  {
+    id: "anom-2",
+    agentId: "agent-3",
+    type: "unusual_resource",
+    severity: "medium",
+    description: "Agent accessed resource pattern not seen in baseline behavior",
+    details: { resource: "pii/employee-records", commonPatterns: ["analytics/*"] },
+    detectedAt: "2026-03-10T18:45:00Z",
+    resolved: false,
+  },
+  {
+    id: "anom-3",
+    agentId: "agent-2",
+    type: "permission_escalation",
+    severity: "critical",
+    description: "Agent attempted to access admin resources after only accessing read-only resources",
+    details: { attemptedResource: "admin/settings", previousPattern: "repos/*/read" },
+    detectedAt: "2026-03-10T17:20:00Z",
+    resolved: true,
+  },
+  {
+    id: "anom-4",
+    agentId: "agent-4",
+    type: "unusual_time",
+    severity: "low",
+    description: "Agent active outside normal operating hours",
+    details: { currentHour: 3, normalHours: [9, 10, 11, 12, 13, 14, 15, 16, 17] },
+    detectedAt: "2026-03-10T03:15:00Z",
+    resolved: false,
+  },
+  {
+    id: "anom-5",
+    agentId: "agent-1",
+    type: "high_deny_rate",
+    severity: "medium",
+    description: "Agent deny rate spiked to 65% (baseline: 12%)",
+    details: { currentDenyRate: 0.65, baselineDenyRate: 0.12 },
+    detectedAt: "2026-03-10T16:00:00Z",
+    resolved: false,
+  },
+];
+
+export const mockAnomalyStats: AnomalyStats = {
+  total: 23,
+  byType: {
+    burst_activity: 5,
+    unusual_resource: 7,
+    permission_escalation: 2,
+    unusual_time: 4,
+    high_deny_rate: 3,
+    unusual_action: 2,
+  },
+  bySeverity: { critical: 2, high: 5, medium: 9, low: 7 },
+  unresolvedCount: 18,
+};
+
+// ─── A2A ────────────────────────────────────────────────────────────
+
+export const mockA2AGraph: A2AGraph = {
+  nodes: [
+    { agentId: "agent-1", agentName: "Customer Support Bot", incomingCount: 5, outgoingCount: 12 },
+    { agentId: "agent-2", agentName: "Code Review Agent", incomingCount: 8, outgoingCount: 3 },
+    { agentId: "agent-3", agentName: "Data Pipeline Agent", incomingCount: 15, outgoingCount: 7 },
+    { agentId: "agent-4", agentName: "Sales Outreach Agent", incomingCount: 2, outgoingCount: 9 },
+    { agentId: "agent-5", agentName: "Internal Wiki Agent", incomingCount: 10, outgoingCount: 1 },
+  ],
+  edges: [
+    { source: "agent-1", target: "agent-5", requestCount: 45, lastCommunication: "2026-03-10T19:30:00Z", status: "active" },
+    { source: "agent-3", target: "agent-1", requestCount: 23, lastCommunication: "2026-03-10T19:15:00Z", status: "active" },
+    { source: "agent-4", target: "agent-1", requestCount: 12, lastCommunication: "2026-03-10T18:45:00Z", status: "active" },
+    { source: "agent-2", target: "agent-3", requestCount: 8, lastCommunication: "2026-03-10T17:00:00Z", status: "blocked" },
+    { source: "agent-1", target: "agent-3", requestCount: 34, lastCommunication: "2026-03-10T19:20:00Z", status: "active" },
+    { source: "agent-4", target: "agent-3", requestCount: 5, lastCommunication: "2026-03-10T16:30:00Z", status: "active" },
+  ],
+};
+
+export const mockA2AChannels: A2AChannel[] = [
+  {
+    id: "ch-1",
+    sourceAgentId: "agent-1",
+    targetAgentId: "agent-5",
+    allowedActions: ["read:knowledge-base", "search:articles"],
+    rateLimit: 100,
+    enabled: true,
+    lastCommunication: "2026-03-10T19:30:00Z",
+  },
+  {
+    id: "ch-2",
+    sourceAgentId: "agent-3",
+    targetAgentId: "agent-1",
+    allowedActions: ["write:tickets", "read:responses"],
+    rateLimit: 50,
+    enabled: true,
+    lastCommunication: "2026-03-10T19:15:00Z",
+  },
+  {
+    id: "ch-3",
+    sourceAgentId: "agent-4",
+    targetAgentId: "agent-1",
+    allowedActions: ["read:customer-data"],
+    rateLimit: 30,
+    enabled: true,
+    lastCommunication: "2026-03-10T18:45:00Z",
+  },
+  {
+    id: "ch-4",
+    sourceAgentId: "agent-2",
+    targetAgentId: "agent-3",
+    allowedActions: ["trigger:pipeline", "read:status"],
+    rateLimit: 20,
+    enabled: false,
+    lastCommunication: "2026-03-10T17:00:00Z",
+  },
+  {
+    id: "ch-5",
+    sourceAgentId: "agent-1",
+    targetAgentId: "agent-3",
+    allowedActions: ["submit:data", "read:results"],
+    rateLimit: 75,
+    enabled: true,
+    lastCommunication: "2026-03-10T19:20:00Z",
+  },
+  {
+    id: "ch-6",
+    sourceAgentId: "agent-4",
+    targetAgentId: "agent-3",
+    allowedActions: ["read:analytics"],
+    rateLimit: 40,
+    enabled: true,
+    lastCommunication: "2026-03-10T16:30:00Z",
+  },
+];
+
+export const mockA2AStats: A2AStats = {
+  activeChannels: 5,
+  totalCommunications24h: 127,
+  blockedChannels: 1,
 };

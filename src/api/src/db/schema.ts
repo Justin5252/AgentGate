@@ -15,6 +15,8 @@ import type {
   PolicyRule,
   PolicyTarget,
   PolicyEffect,
+  AnomalyType,
+  AnomalySeverity,
 } from "@agentgate/shared";
 
 // ─── Agents ──────────────────────────────────────────────────────────
@@ -127,3 +129,100 @@ export const auditLogs = pgTable(
     index("audit_logs_decision_idx").on(table.decision),
   ],
 );
+
+// ─── A2A Channels ──────────────────────────────────────────────────
+
+export const a2aChannels = pgTable(
+  "a2a_channels",
+  {
+    id: text("id").primaryKey(),
+    sourceAgentId: text("source_agent_id")
+      .notNull()
+      .references(() => agents.id),
+    targetAgentId: text("target_agent_id")
+      .notNull()
+      .references(() => agents.id),
+    allowedActions: jsonb("allowed_actions").default(["*"]).$type<string[]>(),
+    allowedDataTypes: jsonb("allowed_data_types")
+      .default(["*"])
+      .$type<string[]>(),
+    maxRequestsPerMinute: integer("max_requests_per_minute")
+      .notNull()
+      .default(60),
+    enabled: boolean("enabled").notNull().default(true),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
+  },
+  (table) => [
+    index("a2a_channels_source_agent_id_idx").on(table.sourceAgentId),
+    index("a2a_channels_target_agent_id_idx").on(table.targetAgentId),
+    uniqueIndex("a2a_channels_source_target_idx").on(
+      table.sourceAgentId,
+      table.targetAgentId,
+    ),
+  ],
+);
+
+// ─── A2A Communications (append-only) ──────────────────────────────
+
+export const a2aCommunications = pgTable(
+  "a2a_communications",
+  {
+    id: text("id").primaryKey(),
+    channelId: text("channel_id").references(() => a2aChannels.id),
+    sourceAgentId: text("source_agent_id")
+      .notNull()
+      .references(() => agents.id),
+    targetAgentId: text("target_agent_id")
+      .notNull()
+      .references(() => agents.id),
+    action: text("action").notNull(),
+    dataType: text("data_type").notNull().default("unknown"),
+    decision: text("decision").notNull().$type<PolicyEffect>(),
+    durationMs: real("duration_ms").notNull(),
+    timestamp: timestamp("timestamp", { withTimezone: true }).defaultNow(),
+  },
+  (table) => [
+    index("a2a_comms_source_agent_id_idx").on(table.sourceAgentId),
+    index("a2a_comms_target_agent_id_idx").on(table.targetAgentId),
+    index("a2a_comms_channel_id_idx").on(table.channelId),
+    index("a2a_comms_timestamp_idx").on(table.timestamp),
+  ],
+);
+
+// ─── Anomalies ──────────────────────────────────────────────────────
+
+export const anomalies = pgTable(
+  "anomalies",
+  {
+    id: text("id").primaryKey(),
+    agentId: text("agent_id")
+      .notNull()
+      .references(() => agents.id),
+    type: text("type").notNull().$type<AnomalyType>(),
+    severity: text("severity").notNull().$type<AnomalySeverity>(),
+    description: text("description").notNull(),
+    details: jsonb("details").default({}).$type<Record<string, unknown>>(),
+    detectedAt: timestamp("detected_at", { withTimezone: true }).defaultNow(),
+    resolved: boolean("resolved").notNull().default(false),
+  },
+  (table) => [
+    index("anomalies_agent_id_idx").on(table.agentId),
+    index("anomalies_type_idx").on(table.type),
+    index("anomalies_detected_at_idx").on(table.detectedAt),
+  ],
+);
+
+// ─── Agent Behavior Profiles ────────────────────────────────────────
+
+export const agentProfiles = pgTable("agent_profiles", {
+  agentId: text("agent_id")
+    .primaryKey()
+    .references(() => agents.id),
+  commonActions: jsonb("common_actions").default([]).$type<string[]>(),
+  commonResources: jsonb("common_resources").default([]).$type<string[]>(),
+  activeHours: jsonb("active_hours").default([]).$type<number[]>(),
+  avgRequestsPerHour: real("avg_requests_per_hour").default(0),
+  avgDenyRate: real("avg_deny_rate").default(0),
+  lastUpdated: timestamp("last_updated", { withTimezone: true }).defaultNow(),
+});

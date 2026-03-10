@@ -4,6 +4,7 @@ import { schema } from "../db/index.js";
 import type {
   AuthorizationRequest,
   AuthorizationDecision,
+  Anomaly,
   Policy,
   ApiResponse,
 } from "@agentgate/shared";
@@ -125,8 +126,41 @@ export async function authorizeRoutes(server: FastifyInstance) {
         .then(() => {})
         .catch((err) => server.log.error(err, "Failed to update lastActiveAt"));
 
-      const response: ApiResponse<AuthorizationDecision> = {
-        data: finalDecision,
+      // Anomaly detection — analyze the request and save any detected anomalies
+      let detectedAnomalies: Anomaly[] = [];
+      try {
+        const rawAnomalies = await server.anomalyDetector.analyzeRequest(
+          body.agentId,
+          body.action,
+          body.resource,
+          finalDecision.decision,
+        );
+
+        if (rawAnomalies.length > 0) {
+          detectedAnomalies = await Promise.all(
+            rawAnomalies.map((a) => server.anomalyDetector.saveAnomaly(a)),
+          );
+        }
+      } catch (anomalyErr) {
+        server.log.error(anomalyErr, "Anomaly detection failed");
+      }
+
+      // Fire-and-forget profile update (don't block the response)
+      server.anomalyDetector
+        .updateProfile(body.agentId)
+        .catch((err) =>
+          server.log.error(err, "Failed to update agent profile"),
+        );
+
+      const response: ApiResponse<
+        AuthorizationDecision & { anomalies?: Anomaly[] }
+      > = {
+        data: {
+          ...finalDecision,
+          ...(detectedAnomalies.length > 0
+            ? { anomalies: detectedAnomalies }
+            : {}),
+        },
         error: null,
         meta: { requestId, durationMs: performance.now() - start },
       };

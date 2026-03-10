@@ -185,6 +185,100 @@ export interface ApiMeta {
   durationMs: number;
 }
 
+// ─── Anomaly Detection ────────────────────────────────────────────
+
+export type AnomalyType =
+  | "unusual_action"
+  | "unusual_resource"
+  | "unusual_time"
+  | "high_deny_rate"
+  | "burst_activity"
+  | "new_resource_pattern"
+  | "permission_escalation";
+
+export type AnomalySeverity = "low" | "medium" | "high" | "critical";
+
+export interface Anomaly {
+  id: string;
+  agentId: string;
+  type: AnomalyType;
+  severity: AnomalySeverity;
+  description: string;
+  details: Record<string, unknown>;
+  detectedAt: string;
+  resolved: boolean;
+}
+
+export interface AgentBehaviorProfile {
+  agentId: string;
+  commonActions: string[];
+  commonResources: string[];
+  activeHours: number[];  // 0-23, hours when agent is typically active
+  avgRequestsPerHour: number;
+  avgDenyRate: number;
+  lastUpdated: string;
+}
+
+export interface AnomalyAlert {
+  anomaly: Anomaly;
+  agentName: string;
+  recommendedAction: "monitor" | "throttle" | "suspend" | "notify";
+}
+
+// ─── Agent-to-Agent (A2A) Governance ──────────────────────────────
+
+export interface A2AChannel {
+  id: string;
+  sourceAgentId: string;
+  targetAgentId: string;
+  allowedActions: string[];
+  allowedDataTypes: string[];
+  maxRequestsPerMinute: number;
+  enabled: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateA2AChannelRequest {
+  sourceAgentId: string;
+  targetAgentId: string;
+  allowedActions?: string[];
+  allowedDataTypes?: string[];
+  maxRequestsPerMinute?: number;
+}
+
+export interface A2ACommunication {
+  id: string;
+  channelId: string;
+  sourceAgentId: string;
+  targetAgentId: string;
+  action: string;
+  dataType: string;
+  decision: PolicyEffect;
+  timestamp: string;
+  durationMs: number;
+}
+
+export interface A2AGraphNode {
+  agentId: string;
+  agentName: string;
+  incomingCount: number;
+  outgoingCount: number;
+}
+
+export interface A2AGraphEdge {
+  source: string;
+  target: string;
+  requestCount: number;
+  lastCommunication: string;
+  status: "active" | "blocked";
+}
+
+export interface A2AGraph {
+  nodes: A2AGraphNode[];
+  edges: A2AGraphEdge[];
+}
+
 // ─── Error Codes ──────────────────────────────────────────────────
 
 export const ErrorCodes = {
@@ -200,6 +294,8 @@ export const ErrorCodes = {
   VALIDATION_ERROR: "VALIDATION_ERROR",
   INTERNAL_ERROR: "INTERNAL_ERROR",
   RATE_LIMITED: "RATE_LIMITED",
+  ANOMALY_DETECTED: "ANOMALY_DETECTED",
+  AGENT_THROTTLED: "AGENT_THROTTLED",
 } as const;
 
 export type ErrorCode = (typeof ErrorCodes)[keyof typeof ErrorCodes];
