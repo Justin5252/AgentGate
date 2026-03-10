@@ -54,6 +54,24 @@ export async function buildServer(options: BuildServerOptions) {
   // Register auth middleware (must come before routes)
   await server.register(authMiddleware);
 
+  // Root route
+  server.get("/", async () => ({
+    name: "AgentGate API",
+    version: "0.1.0",
+    description: "AI Agent Identity & Permissions Platform",
+    docs: "/api/v1",
+    health: "/health",
+    endpoints: {
+      agents: "/api/v1/agents",
+      policies: "/api/v1/policies",
+      authorize: "/api/v1/authorize",
+      audit: "/api/v1/audit",
+      anomalies: "/api/v1/anomalies",
+      a2a: "/api/v1/a2a",
+      keys: "/api/v1/keys",
+    },
+  }));
+
   // Register routes
   await server.register(healthRoutes);
   await server.register(apiKeyRoutes, { prefix: "/api/v1/keys" });
