@@ -22,15 +22,21 @@ export const authMiddleware = fp(async function authMiddlewarePlugin(server: Fas
   server.addHook(
     "onRequest",
     async (request: FastifyRequest, reply: FastifyReply) => {
-      // Skip auth for health endpoint
-      if (request.url === "/health") {
+      // Skip auth for health endpoint and root page
+      if (request.url === "/health" || request.url === "/") {
+        return;
+      }
+
+      // Skip auth for Stripe webhooks (verified by signature instead)
+      if (request.url === "/api/v1/billing/webhook" && request.method === "POST") {
         return;
       }
 
       const authHeader = request.headers.authorization;
-      const isDev = process.env.NODE_ENV === "development";
+      const isDev = process.env.NODE_ENV !== "production";
 
-      // In dev mode, if no Authorization header is provided, allow through
+      // In non-production mode, if no Authorization header is provided, allow through
+      // WARNING: Ensure NODE_ENV=production in production deployments
       if (isDev && !authHeader) {
         return;
       }

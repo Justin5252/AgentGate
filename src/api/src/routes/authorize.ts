@@ -12,7 +12,11 @@ import { ErrorCodes } from "@agentgate/shared";
 
 export async function authorizeRoutes(server: FastifyInstance) {
   // POST /authorize — Evaluate an authorization request
-  server.post("/authorize", async (request, reply) => {
+  server.post("/authorize", {
+    config: {
+      rateLimit: { max: 30, timeWindow: "1 minute" },
+    },
+  }, async (request, reply) => {
     const start = performance.now();
     const requestId = crypto.randomUUID();
 

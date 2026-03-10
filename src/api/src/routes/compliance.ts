@@ -51,11 +51,11 @@ export async function complianceRoutes(server: FastifyInstance) {
         error: null,
         meta: { requestId, durationMs: performance.now() - start },
       });
-    } catch (err: any) {
+    } catch (err) {
       server.log.error(err);
       return reply.status(400).send({
         data: null,
-        error: { code: ErrorCodes.VALIDATION_ERROR, message: err.message },
+        error: { code: ErrorCodes.VALIDATION_ERROR, message: "Invalid request" },
         meta: { requestId, durationMs: performance.now() - start },
       });
     }
@@ -74,11 +74,11 @@ export async function complianceRoutes(server: FastifyInstance) {
         error: null,
         meta: { requestId, durationMs: performance.now() - start },
       });
-    } catch (err: any) {
+    } catch (err) {
       server.log.error(err);
       return reply.status(400).send({
         data: null,
-        error: { code: ErrorCodes.FRAMEWORK_NOT_FOUND, message: err.message },
+        error: { code: ErrorCodes.FRAMEWORK_NOT_FOUND, message: "Framework not found or not initialized" },
         meta: { requestId, durationMs: performance.now() - start },
       });
     }

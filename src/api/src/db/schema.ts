@@ -263,7 +263,7 @@ export const anomalies = pgTable(
 
 export const subscriptions = pgTable("subscriptions", {
   id: text("id").primaryKey(),
-  tenantId: text("tenant_id").notNull(),
+  tenantId: text("tenant_id").notNull().references(() => tenants.id),
   stripeCustomerId: text("stripe_customer_id").notNull(),
   stripeSubscriptionId: text("stripe_subscription_id"),
   plan: text("plan").notNull().default("free"),

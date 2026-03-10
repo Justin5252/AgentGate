@@ -107,10 +107,14 @@ export async function apiKeyRoutes(server: FastifyInstance) {
     const requestId = crypto.randomUUID();
 
     try {
-      const rows = await server.db
+      const tenantId = request.tenantId;
+      const query = server.db
         .select()
-        .from(schema.apiKeys)
-        .orderBy(desc(schema.apiKeys.createdAt));
+        .from(schema.apiKeys);
+
+      const rows = tenantId
+        ? await query.where(eq(schema.apiKeys.tenantId, tenantId)).orderBy(desc(schema.apiKeys.createdAt))
+        : await query.orderBy(desc(schema.apiKeys.createdAt));
 
       const data: ApiKeyResponse[] = rows.map((row) => ({
         id: row.id,

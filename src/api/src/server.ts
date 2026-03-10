@@ -47,8 +47,20 @@ export async function buildServer(options: BuildServerOptions) {
   });
 
   // Register plugins
-  await server.register(cors, { origin: true });
-  await server.register(rateLimit, { max: 100, timeWindow: "1 minute" });
+  await server.register(cors, {
+    origin: process.env.ALLOWED_ORIGINS
+      ? process.env.ALLOWED_ORIGINS.split(",")
+      : ["http://localhost:3200", "http://localhost:3300"],
+    credentials: true,
+  });
+  await server.register(rateLimit, {
+    max: 100,
+    timeWindow: "1 minute",
+    // Stricter limits for sensitive endpoints
+    keyGenerator: (request) => {
+      return request.ip;
+    },
+  });
 
   // Database & engine
   const { db } = createDb(options.databaseUrl);

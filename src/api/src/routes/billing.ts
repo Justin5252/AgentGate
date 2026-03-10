@@ -63,7 +63,7 @@ export async function billingRoutes(server: FastifyInstance) {
         data: null,
         error: {
           code: ErrorCodes.INTERNAL_ERROR,
-          message: err instanceof Error ? err.message : "Failed to create checkout session",
+          message: "Failed to create checkout session",
         },
         meta: { requestId, durationMs: performance.now() - start },
       };
@@ -107,7 +107,7 @@ export async function billingRoutes(server: FastifyInstance) {
         data: null,
         error: {
           code: ErrorCodes.INTERNAL_ERROR,
-          message: err instanceof Error ? err.message : "Failed to create billing portal session",
+          message: "Failed to create billing portal session",
         },
         meta: { requestId, durationMs: performance.now() - start },
       };
@@ -137,7 +137,7 @@ export async function billingRoutes(server: FastifyInstance) {
           data: null,
           error: {
             code: ErrorCodes.INTERNAL_ERROR,
-            message: err instanceof Error ? err.message : "Failed to fetch subscription",
+            message: "Failed to fetch subscription",
           },
           meta: { requestId, durationMs: performance.now() - start },
         };
@@ -168,7 +168,7 @@ export async function billingRoutes(server: FastifyInstance) {
           data: null,
           error: {
             code: ErrorCodes.INTERNAL_ERROR,
-            message: err instanceof Error ? err.message : "Failed to cancel subscription",
+            message: "Failed to cancel subscription",
           },
           meta: { requestId, durationMs: performance.now() - start },
         };
@@ -203,7 +203,7 @@ export async function billingRoutes(server: FastifyInstance) {
       } catch (err) {
         server.log.error(err, "Stripe webhook error");
         return reply.status(400).send({
-          error: err instanceof Error ? err.message : "Webhook processing failed",
+          error: "Webhook processing failed",
         });
       }
     },
