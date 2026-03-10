@@ -81,6 +81,27 @@ export const agentTokens = pgTable(
   ],
 );
 
+// ─── API Keys ────────────────────────────────────────────────────────
+
+export const apiKeys = pgTable(
+  "api_keys",
+  {
+    id: text("id").primaryKey(), // UUIDv7
+    name: text("name").notNull(),
+    keyHash: text("key_hash").notNull(),
+    keyPrefix: text("key_prefix").notNull(),
+    scopes: jsonb("scopes").default(["*"]).$type<string[]>(),
+    ownerId: text("owner_id").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+    lastUsedAt: timestamp("last_used_at", { withTimezone: true }),
+    revoked: boolean("revoked").notNull().default(false),
+  },
+  (table) => [
+    uniqueIndex("api_keys_key_hash_idx").on(table.keyHash),
+    index("api_keys_owner_id_idx").on(table.ownerId),
+  ],
+);
+
 // ─── Audit Logs (append-only) ────────────────────────────────────────
 
 export const auditLogs = pgTable(

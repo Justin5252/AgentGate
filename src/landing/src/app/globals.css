@@ -1,0 +1,153 @@
+@import "tailwindcss";
+
+:root {
+  --bg-primary: #050A15;
+  --bg-card: #080D1B;
+  --bg-card-hover: #0C1224;
+  --blue: #3B82F6;
+  --teal: #06D6A0;
+  --border: #1E293B;
+  --text-primary: #F8FAFC;
+  --text-secondary: #94A3B8;
+  --text-muted: #64748B;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-primary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}
+
+/* Glow card effect */
+.glow-card {
+  position: relative;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.glow-card:hover {
+  border-color: rgba(59, 130, 246, 0.4);
+  box-shadow: 0 0 30px rgba(59, 130, 246, 0.1), 0 0 60px rgba(6, 214, 160, 0.05);
+}
+
+/* Gradient text */
+.gradient-text {
+  background: linear-gradient(135deg, var(--blue), var(--teal));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Code syntax highlighting */
+.code-keyword {
+  color: #C084FC;
+}
+
+.code-string {
+  color: #34D399;
+}
+
+.code-comment {
+  color: #64748B;
+}
+
+.code-function {
+  color: #60A5FA;
+}
+
+.code-variable {
+  color: #F8FAFC;
+}
+
+.code-type {
+  color: #38BDF8;
+}
+
+.code-operator {
+  color: #94A3B8;
+}
+
+.code-property {
+  color: #FBBF24;
+}
+
+/* Glow border animation for code block */
+@keyframes glow-pulse {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.15), 0 0 40px rgba(6, 214, 160, 0.08);
+  }
+  50% {
+    box-shadow: 0 0 30px rgba(59, 130, 246, 0.25), 0 0 60px rgba(6, 214, 160, 0.12);
+  }
+}
+
+.code-glow {
+  animation: glow-pulse 3s ease-in-out infinite;
+  border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+/* Stat counter animation */
+@keyframes count-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.stat-number {
+  animation: count-up 0.6s ease-out forwards;
+}
+
+/* Section fade in */
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.section-animate {
+  animation: fade-in-up 0.6s ease-out forwards;
+}

@@ -1,0 +1,20 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "agentgate"
+version = "0.1.0"
+description = "Python SDK for AgentGate — AI Agent Identity & Permissions Platform"
+requires-python = ">=3.9"
+license = "MIT"
+dependencies = [
+    "httpx>=0.27",
+    "pydantic>=2.0",
+]
+
+[project.optional-dependencies]
+dev = ["pytest", "pytest-asyncio", "respx"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/agentgate"]

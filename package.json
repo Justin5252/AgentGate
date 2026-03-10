@@ -6,6 +6,7 @@
   "workspaces": [
     "src/api",
     "src/dashboard",
+    "src/landing",
     "src/sdk",
     "src/engine",
     "packages/*"

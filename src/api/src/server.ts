@@ -8,6 +8,8 @@ import { policyRoutes } from "./routes/policies.js";
 import { authorizeRoutes } from "./routes/authorize.js";
 import { auditRoutes } from "./routes/audit.js";
 import { healthRoutes } from "./routes/health.js";
+import { apiKeyRoutes } from "./routes/api-keys.js";
+import { authMiddleware } from "./middleware/auth.js";
 import type { Database } from "./db/index.js";
 
 declare module "fastify" {
@@ -42,8 +44,12 @@ export async function buildServer(options: BuildServerOptions) {
   server.decorate("db", db);
   server.decorate("evaluator", evaluator);
 
+  // Register auth middleware (must come before routes)
+  await server.register(authMiddleware);
+
   // Register routes
   await server.register(healthRoutes);
+  await server.register(apiKeyRoutes, { prefix: "/api/v1/keys" });
   await server.register(agentRoutes, { prefix: "/api/v1/agents" });
   await server.register(policyRoutes, { prefix: "/api/v1/policies" });
   await server.register(authorizeRoutes, { prefix: "/api/v1" });
