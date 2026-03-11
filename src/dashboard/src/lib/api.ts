@@ -341,3 +341,123 @@ export async function revokeApiKey(id: string): Promise<void> {
     method: "DELETE",
   });
 }
+
+// ─── SSO ──────────────────────────────────────────────────────────
+
+export interface SSOConnection {
+  id: string;
+  tenantId: string;
+  provider: string;
+  protocol: string;
+  enabled: boolean;
+  enforced: boolean;
+  defaultRole: string;
+  jitProvisioning: boolean;
+  attributeMapping: Record<string, string>;
+  samlEntityId: string | null;
+  samlSsoUrl: string | null;
+  samlCertificate: string | null;
+  samlMetadataUrl: string | null;
+  oidcDiscoveryUrl: string | null;
+  oidcClientId: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SSOSession {
+  id: string;
+  tenantId: string;
+  userId: string;
+  provider: string;
+  expiresAt: string;
+  revokedAt: string | null;
+  createdAt: string;
+  ipAddress: string | null;
+  userAgent: string | null;
+}
+
+export interface SCIMToken {
+  id: string;
+  tenantId: string;
+  connectionId: string;
+  tokenPrefix: string;
+  revoked: boolean;
+  createdAt: string;
+  lastUsedAt: string | null;
+}
+
+export interface SCIMGroup {
+  id: string;
+  tenantId: string;
+  connectionId: string;
+  externalGroupId: string;
+  displayName: string;
+  mappedRole: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SPMetadata {
+  entityId: string;
+  acsUrl: string;
+  metadataUrl: string;
+}
+
+export interface SSOTestResult {
+  success: boolean;
+  message: string;
+  details?: Record<string, unknown>;
+}
+
+export async function fetchSSOConnections(): Promise<SSOConnection[]> {
+  return request<SSOConnection[]>("/api/v1/sso/connections");
+}
+
+export async function createSSOConnection(data: Record<string, unknown>): Promise<SSOConnection> {
+  return request<SSOConnection>("/api/v1/sso/connections", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+export async function updateSSOConnection(id: string, data: Record<string, unknown>): Promise<SSOConnection> {
+  return request<SSOConnection>(`/api/v1/sso/connections/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify(data),
+  });
+}
+
+export async function deleteSSOConnection(id: string): Promise<void> {
+  return request<void>(`/api/v1/sso/connections/${id}`, { method: "DELETE" });
+}
+
+export async function testSSOConnection(id: string): Promise<SSOTestResult> {
+  return request<SSOTestResult>(`/api/v1/sso/connections/${id}/test`, { method: "POST" });
+}
+
+export async function fetchSPMetadata(id: string): Promise<SPMetadata> {
+  return request<SPMetadata>(`/api/v1/sso/connections/${id}/metadata`);
+}
+
+export async function fetchSSOSessions(): Promise<SSOSession[]> {
+  return request<SSOSession[]>("/api/v1/sso/sessions");
+}
+
+export async function revokeSSOSession(id: string): Promise<void> {
+  return request<void>(`/api/v1/sso/sessions/${id}`, { method: "DELETE" });
+}
+
+export async function fetchSCIMTokens(): Promise<SCIMToken[]> {
+  return request<SCIMToken[]>("/api/v1/sso/scim-tokens");
+}
+
+export async function generateSCIMToken(connectionId: string): Promise<SCIMToken & { token: string }> {
+  return request<SCIMToken & { token: string }>("/api/v1/sso/scim-tokens", {
+    method: "POST",
+    body: JSON.stringify({ connectionId }),
+  });
+}
+
+export async function revokeSCIMToken(id: string): Promise<void> {
+  return request<void>(`/api/v1/sso/scim-tokens/${id}`, { method: "DELETE" });
+}

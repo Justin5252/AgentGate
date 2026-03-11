@@ -19,6 +19,10 @@ import type {
   AnomalySeverity,
   TenantPlan,
   UserRole,
+  SSOProvider,
+  SSOProtocol,
+  SSOEventType,
+  ProvisionMethod,
 } from "@agentgate/shared";
 
 // ─── Tenants ─────────────────────────────────────────────────────────
@@ -48,6 +52,9 @@ export const tenantUsers = pgTable(
     role: text("role").notNull().default("member").$type<UserRole>(),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
     lastLoginAt: timestamp("last_login_at", { withTimezone: true }),
+    externalId: text("external_id"),
+    provisionedVia: text("provisioned_via").default("manual").$type<ProvisionMethod>(),
+    deactivatedAt: timestamp("deactivated_at", { withTimezone: true }),
   },
   (table) => [
     index("tenant_users_tenant_id_idx").on(table.tenantId),
@@ -56,6 +63,7 @@ export const tenantUsers = pgTable(
       table.tenantId,
       table.email,
     ),
+    index("tenant_users_tenant_external_id_idx").on(table.tenantId, table.externalId),
   ],
 );
 
@@ -406,5 +414,139 @@ export const regulatoryUpdates = pgTable(
   (table) => [
     index("regulatory_updates_framework_id_idx").on(table.frameworkId),
     index("regulatory_updates_tenant_id_idx").on(table.tenantId),
+  ],
+);
+
+// ─── SSO Connections ──────────────────────────────────────────────
+
+export const ssoConnections = pgTable(
+  "sso_connections",
+  {
+    id: text("id").primaryKey(),
+    tenantId: text("tenant_id")
+      .notNull()
+      .references(() => tenants.id),
+    provider: text("provider").notNull().$type<SSOProvider>(),
+    protocol: text("protocol").notNull().$type<SSOProtocol>(),
+    enabled: boolean("enabled").notNull().default(false),
+    enforced: boolean("enforced").notNull().default(false),
+    defaultRole: text("default_role").notNull().default("member").$type<UserRole>(),
+    jitProvisioning: boolean("jit_provisioning").notNull().default(true),
+    attributeMapping: jsonb("attribute_mapping").default({}).$type<Record<string, string>>(),
+    // SAML fields
+    samlEntityId: text("saml_entity_id"),
+    samlSsoUrl: text("saml_sso_url"),
+    samlCertificate: text("saml_certificate"),
+    samlMetadataUrl: text("saml_metadata_url"),
+    // OIDC fields
+    oidcDiscoveryUrl: text("oidc_discovery_url"),
+    oidcClientId: text("oidc_client_id"),
+    oidcClientSecretEncrypted: text("oidc_client_secret_encrypted"),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
+  },
+  (table) => [
+    index("sso_connections_tenant_id_idx").on(table.tenantId),
+  ],
+);
+
+// ─── SSO Sessions ─────────────────────────────────────────────────
+
+export const ssoSessions = pgTable(
+  "sso_sessions",
+  {
+    id: text("id").primaryKey(),
+    tenantId: text("tenant_id")
+      .notNull()
+      .references(() => tenants.id),
+    userId: text("user_id")
+      .notNull()
+      .references(() => tenantUsers.id),
+    tokenHash: text("token_hash").notNull(),
+    provider: text("provider").notNull().$type<SSOProvider>(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    revokedAt: timestamp("revoked_at", { withTimezone: true }),
+    ipAddress: text("ip_address"),
+    userAgent: text("user_agent"),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("sso_sessions_token_hash_idx").on(table.tokenHash),
+    index("sso_sessions_tenant_id_idx").on(table.tenantId),
+    index("sso_sessions_user_id_idx").on(table.userId),
+    index("sso_sessions_expires_at_idx").on(table.expiresAt),
+  ],
+);
+
+// ─── SCIM Tokens ──────────────────────────────────────────────────
+
+export const scimTokens = pgTable(
+  "scim_tokens",
+  {
+    id: text("id").primaryKey(),
+    tenantId: text("tenant_id")
+      .notNull()
+      .references(() => tenants.id),
+    connectionId: text("connection_id")
+      .notNull()
+      .references(() => ssoConnections.id),
+    tokenHash: text("token_hash").notNull(),
+    tokenPrefix: text("token_prefix").notNull(),
+    revoked: boolean("revoked").notNull().default(false),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+    lastUsedAt: timestamp("last_used_at", { withTimezone: true }),
+  },
+  (table) => [
+    uniqueIndex("scim_tokens_token_hash_idx").on(table.tokenHash),
+    index("scim_tokens_tenant_id_idx").on(table.tenantId),
+    index("scim_tokens_connection_id_idx").on(table.connectionId),
+  ],
+);
+
+// ─── SCIM Groups ──────────────────────────────────────────────────
+
+export const scimGroups = pgTable(
+  "scim_groups",
+  {
+    id: text("id").primaryKey(),
+    tenantId: text("tenant_id")
+      .notNull()
+      .references(() => tenants.id),
+    connectionId: text("connection_id")
+      .notNull()
+      .references(() => ssoConnections.id),
+    externalGroupId: text("external_group_id").notNull(),
+    displayName: text("display_name").notNull(),
+    mappedRole: text("mapped_role").notNull().default("member").$type<UserRole>(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
+  },
+  (table) => [
+    index("scim_groups_tenant_id_idx").on(table.tenantId),
+    index("scim_groups_connection_id_idx").on(table.connectionId),
+    uniqueIndex("scim_groups_tenant_external_idx").on(table.tenantId, table.connectionId, table.externalGroupId),
+  ],
+);
+
+// ─── SSO Audit Logs ───────────────────────────────────────────────
+
+export const ssoAuditLogs = pgTable(
+  "sso_audit_logs",
+  {
+    id: text("id").primaryKey(),
+    tenantId: text("tenant_id")
+      .notNull()
+      .references(() => tenants.id),
+    userId: text("user_id"),
+    event: text("event").notNull().$type<SSOEventType>(),
+    provider: text("provider").$type<SSOProvider>(),
+    details: jsonb("details").default({}).$type<Record<string, unknown>>(),
+    ipAddress: text("ip_address"),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+  },
+  (table) => [
+    index("sso_audit_logs_tenant_id_idx").on(table.tenantId),
+    index("sso_audit_logs_event_idx").on(table.event),
+    index("sso_audit_logs_created_at_idx").on(table.createdAt),
   ],
 );

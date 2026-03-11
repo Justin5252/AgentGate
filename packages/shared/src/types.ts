@@ -479,6 +479,147 @@ export interface GapItem {
   priority: number;
 }
 
+// ─── SSO / SAML / OIDC ───────────────────────────────────────────
+
+export type SSOProvider = "okta" | "azure_ad" | "google" | "onelogin" | "custom_saml" | "custom_oidc";
+
+export type SSOProtocol = "saml" | "oidc";
+
+export type SSOEventType =
+  | "sso_login_success"
+  | "sso_login_failure"
+  | "sso_logout"
+  | "session_created"
+  | "session_revoked"
+  | "session_expired"
+  | "connection_created"
+  | "connection_updated"
+  | "connection_deleted"
+  | "connection_test"
+  | "scim_user_created"
+  | "scim_user_updated"
+  | "scim_user_deactivated"
+  | "scim_group_created"
+  | "scim_group_updated"
+  | "scim_group_deleted"
+  | "scim_token_generated"
+  | "scim_token_revoked"
+  | "enforcement_enabled"
+  | "enforcement_disabled";
+
+export type ProvisionMethod = "manual" | "scim" | "jit";
+
+export interface SSOConnection {
+  id: string;
+  tenantId: string;
+  provider: SSOProvider;
+  protocol: SSOProtocol;
+  enabled: boolean;
+  enforced: boolean;
+  defaultRole: UserRole;
+  jitProvisioning: boolean;
+  attributeMapping: Record<string, string>;
+  // SAML fields
+  samlEntityId: string | null;
+  samlSsoUrl: string | null;
+  samlCertificate: string | null;
+  samlMetadataUrl: string | null;
+  // OIDC fields
+  oidcDiscoveryUrl: string | null;
+  oidcClientId: string | null;
+  oidcClientSecretEncrypted: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateSSOConnectionRequest {
+  provider: SSOProvider;
+  protocol: SSOProtocol;
+  defaultRole?: UserRole;
+  jitProvisioning?: boolean;
+  attributeMapping?: Record<string, string>;
+  // SAML
+  samlEntityId?: string;
+  samlSsoUrl?: string;
+  samlCertificate?: string;
+  samlMetadataUrl?: string;
+  // OIDC
+  oidcDiscoveryUrl?: string;
+  oidcClientId?: string;
+  oidcClientSecret?: string;
+}
+
+export interface UpdateSSOConnectionRequest {
+  enabled?: boolean;
+  enforced?: boolean;
+  defaultRole?: UserRole;
+  jitProvisioning?: boolean;
+  attributeMapping?: Record<string, string>;
+  samlEntityId?: string;
+  samlSsoUrl?: string;
+  samlCertificate?: string;
+  samlMetadataUrl?: string;
+  oidcDiscoveryUrl?: string;
+  oidcClientId?: string;
+  oidcClientSecret?: string;
+}
+
+export interface SSOSession {
+  id: string;
+  tenantId: string;
+  userId: string;
+  provider: SSOProvider;
+  expiresAt: string;
+  revokedAt: string | null;
+  createdAt: string;
+  ipAddress: string | null;
+  userAgent: string | null;
+}
+
+export interface SCIMToken {
+  id: string;
+  tenantId: string;
+  connectionId: string;
+  tokenPrefix: string;
+  revoked: boolean;
+  createdAt: string;
+  lastUsedAt: string | null;
+}
+
+export interface SCIMGroup {
+  id: string;
+  tenantId: string;
+  connectionId: string;
+  externalGroupId: string;
+  displayName: string;
+  mappedRole: UserRole;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SPMetadata {
+  entityId: string;
+  acsUrl: string;
+  metadataUrl: string;
+}
+
+export interface SSOTestResult {
+  success: boolean;
+  message: string;
+  details?: Record<string, unknown>;
+}
+
+export interface SSOAuditEntry {
+  id: string;
+  tenantId: string;
+  userId: string | null;
+  event: SSOEventType;
+  provider: SSOProvider | null;
+  details: Record<string, unknown>;
+  ipAddress: string | null;
+  createdAt: string;
+}
+
 // ─── Error Codes ──────────────────────────────────────────────────
 
 export const ErrorCodes = {
@@ -505,6 +646,15 @@ export const ErrorCodes = {
   CONTROL_NOT_FOUND: "CONTROL_NOT_FOUND",
   EVIDENCE_NOT_FOUND: "EVIDENCE_NOT_FOUND",
   REPORT_NOT_FOUND: "REPORT_NOT_FOUND",
+  SSO_NOT_CONFIGURED: "SSO_NOT_CONFIGURED",
+  SSO_CONNECTION_NOT_FOUND: "SSO_CONNECTION_NOT_FOUND",
+  SSO_REQUIRED: "SSO_REQUIRED",
+  SSO_INVALID_RESPONSE: "SSO_INVALID_RESPONSE",
+  SCIM_TOKEN_INVALID: "SCIM_TOKEN_INVALID",
+  SCIM_RESOURCE_NOT_FOUND: "SCIM_RESOURCE_NOT_FOUND",
+  PLAN_UPGRADE_REQUIRED: "PLAN_UPGRADE_REQUIRED",
+  SESSION_EXPIRED: "SESSION_EXPIRED",
+  SESSION_REVOKED: "SESSION_REVOKED",
 } as const;
 
 export type ErrorCode = (typeof ErrorCodes)[keyof typeof ErrorCodes];

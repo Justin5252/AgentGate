@@ -1,5 +1,5 @@
 import type { AgentIdentity, Policy, AuditEntry } from "@agentgate/shared";
-import type { AuditStats, Anomaly, AnomalyStats, A2AGraph, A2AChannel, A2AStats, Plan, Subscription, TenantUsage, ApiKey, TenantUser } from "./api";
+import type { AuditStats, Anomaly, AnomalyStats, A2AGraph, A2AChannel, A2AStats, Plan, Subscription, TenantUsage, ApiKey, TenantUser, SSOConnection, SSOSession, SCIMToken, SCIMGroup } from "./api";
 
 export const mockAgents: AgentIdentity[] = [
   {
@@ -624,4 +624,88 @@ export const mockScoreHistory = [
   { date: "2026-02-15", score: 61 },
   { date: "2026-02-28", score: 68 },
   { date: "2026-03-10", score: 82 },
+];
+
+// ─── SSO ──────────────────────────────────────────────────────────
+
+export const mockSSOConnections: SSOConnection[] = [
+  {
+    id: "sso-1",
+    tenantId: "tenant-1",
+    provider: "okta",
+    protocol: "saml",
+    enabled: true,
+    enforced: false,
+    defaultRole: "member",
+    jitProvisioning: true,
+    attributeMapping: { email: "emailAddress", name: "displayName" },
+    samlEntityId: "https://company.okta.com/app/entity-id",
+    samlSsoUrl: "https://company.okta.com/app/sso/saml",
+    samlCertificate: "MIIDpDCCAoygAwIBA...",
+    samlMetadataUrl: "https://company.okta.com/app/metadata",
+    oidcDiscoveryUrl: null,
+    oidcClientId: null,
+    createdAt: "2026-03-05T10:00:00Z",
+    updatedAt: "2026-03-10T14:00:00Z",
+  },
+];
+
+export const mockSSOSessions: SSOSession[] = [
+  {
+    id: "sess-1",
+    tenantId: "tenant-1",
+    userId: "user-1",
+    provider: "okta",
+    expiresAt: "2026-03-11T03:00:00Z",
+    revokedAt: null,
+    createdAt: "2026-03-10T19:00:00Z",
+    ipAddress: "192.168.1.100",
+    userAgent: "Mozilla/5.0",
+  },
+  {
+    id: "sess-2",
+    tenantId: "tenant-1",
+    userId: "user-2",
+    provider: "okta",
+    expiresAt: "2026-03-11T01:00:00Z",
+    revokedAt: null,
+    createdAt: "2026-03-10T17:00:00Z",
+    ipAddress: "192.168.1.101",
+    userAgent: "Mozilla/5.0",
+  },
+];
+
+export const mockSCIMTokens: SCIMToken[] = [
+  {
+    id: "scim-tok-1",
+    tenantId: "tenant-1",
+    connectionId: "sso-1",
+    tokenPrefix: "scim_a1b2c3d4",
+    revoked: false,
+    createdAt: "2026-03-05T10:00:00Z",
+    lastUsedAt: "2026-03-10T18:30:00Z",
+  },
+];
+
+export const mockSCIMGroups: SCIMGroup[] = [
+  {
+    id: "grp-1",
+    tenantId: "tenant-1",
+    connectionId: "sso-1",
+    externalGroupId: "okta-engineering",
+    displayName: "Engineering",
+    mappedRole: "admin",
+    createdAt: "2026-03-05T10:00:00Z",
+    updatedAt: "2026-03-10T14:00:00Z",
+  },
+  {
+    id: "grp-2",
+    tenantId: "tenant-1",
+    connectionId: "sso-1",
+    externalGroupId: "okta-security",
+    displayName: "Security Team",
+    mappedRole: "auditor",
+    createdAt: "2026-03-06T10:00:00Z",
+    updatedAt: "2026-03-10T14:00:00Z",
+  },
 ];
