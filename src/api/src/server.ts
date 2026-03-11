@@ -1,6 +1,8 @@
 import Fastify from "fastify";
 import cors from "@fastify/cors";
 import rateLimit from "@fastify/rate-limit";
+import cookie from "@fastify/cookie";
+import formbody from "@fastify/formbody";
 import { createDb } from "./db/index.js";
 import { PolicyEvaluator } from "@agentgate/engine";
 import { agentRoutes } from "./routes/agents.js";
@@ -14,11 +16,15 @@ import { complianceRoutes } from "./routes/compliance.js";
 import { anomalyRoutes } from "./routes/anomalies.js";
 import { billingRoutes } from "./routes/billing.js";
 import { tenantRoutes } from "./routes/tenants.js";
+import { ssoRoutes } from "./routes/sso.js";
+import { authRoutes } from "./routes/auth.js";
+import { scimRoutes } from "./routes/scim.js";
 import { authMiddleware } from "./middleware/auth.js";
 import { AnomalyDetector } from "./services/anomaly-detector.js";
 import { BillingService } from "./services/billing.js";
 import { UsageTracker } from "./services/usage-tracker.js";
 import { ComplianceService } from "./services/compliance.js";
+import { SSOService } from "./services/sso.js";
 import type { Database } from "./db/index.js";
 
 declare module "fastify" {
@@ -29,6 +35,7 @@ declare module "fastify" {
     billingService: BillingService;
     usageTracker: UsageTracker;
     complianceService: ComplianceService;
+    ssoService: SSOService;
   }
 }
 
@@ -50,7 +57,7 @@ export async function buildServer(options: BuildServerOptions) {
   await server.register(cors, {
     origin: process.env.ALLOWED_ORIGINS
       ? process.env.ALLOWED_ORIGINS.split(",")
-      : ["http://localhost:3200", "http://localhost:3300"],
+      : ["http://localhost:3200", "http://localhost:3300", "http://localhost:3400"],
     credentials: true,
   });
   await server.register(rateLimit, {
@@ -61,6 +68,10 @@ export async function buildServer(options: BuildServerOptions) {
       return request.ip;
     },
   });
+  await server.register(cookie, {
+    secret: process.env.COOKIE_SECRET ?? "dev-cookie-secret",
+  });
+  await server.register(formbody);
 
   // Database & engine
   const { db } = createDb(options.databaseUrl);
@@ -70,6 +81,7 @@ export async function buildServer(options: BuildServerOptions) {
   const billingService = new BillingService(db);
   const usageTracker = new UsageTracker(db);
   const complianceService = new ComplianceService(db);
+  const ssoService = new SSOService(db);
 
   server.decorate("db", db);
   server.decorate("evaluator", evaluator);
@@ -77,6 +89,7 @@ export async function buildServer(options: BuildServerOptions) {
   server.decorate("billingService", billingService);
   server.decorate("usageTracker", usageTracker);
   server.decorate("complianceService", complianceService);
+  server.decorate("ssoService", ssoService);
 
   // Register auth middleware (must come before routes)
   await server.register(authMiddleware);
@@ -179,6 +192,26 @@ export async function buildServer(options: BuildServerOptions) {
       </div>
     </div>
 
+    <div class="section-title">SSO & Identity</div>
+    <div class="endpoints">
+      <div class="endpoint">
+        <span class="endpoint-name"><span class="method">GET</span> SSO Connections</span>
+        <span class="endpoint-path"><a href="/api/v1/sso/connections">/api/v1/sso/connections</a></span>
+      </div>
+      <div class="endpoint">
+        <span class="endpoint-name"><span class="method">GET</span> SSO Sessions</span>
+        <span class="endpoint-path"><a href="/api/v1/sso/sessions">/api/v1/sso/sessions</a></span>
+      </div>
+      <div class="endpoint">
+        <span class="endpoint-name"><span class="method">GET</span> SSO Audit Log</span>
+        <span class="endpoint-path"><a href="/api/v1/sso/audit">/api/v1/sso/audit</a></span>
+      </div>
+      <div class="endpoint">
+        <span class="endpoint-name"><span class="method">GET</span> SCIM Tokens</span>
+        <span class="endpoint-path"><a href="/api/v1/sso/scim-tokens">/api/v1/sso/scim-tokens</a></span>
+      </div>
+    </div>
+
     <div class="section-title">Management</div>
     <div class="endpoints">
       <div class="endpoint">
@@ -214,6 +247,9 @@ export async function buildServer(options: BuildServerOptions) {
         keys: "/api/v1/keys",
         tenants: "/api/v1/tenants",
         compliance: "/api/v1/compliance",
+        sso: "/api/v1/sso",
+        auth: "/api/v1/auth",
+        scim: "/api/v1/scim/:tenantSlug",
       },
     };
   });
@@ -230,6 +266,9 @@ export async function buildServer(options: BuildServerOptions) {
   await server.register(billingRoutes, { prefix: "/api/v1/billing" });
   await server.register(tenantRoutes, { prefix: "/api/v1/tenants" });
   await server.register(complianceRoutes, { prefix: "/api/v1/compliance" });
+  await server.register(ssoRoutes, { prefix: "/api/v1/sso" });
+  await server.register(authRoutes, { prefix: "/api/v1/auth" });
+  await server.register(scimRoutes, { prefix: "/api/v1/scim/:tenantSlug" });
 
   return server;
 }

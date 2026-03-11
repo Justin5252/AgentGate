@@ -155,11 +155,56 @@ A platform that lets companies:
 - [x] Go SDK — zero dependencies, generics, retry logic, 17 tests
 - [x] Enterprise dashboard — Settings page (org/API keys/team), Billing page (plans/usage)
 - [x] Role-based dashboard access (admin, auditor, viewer) — RBAC types + UI
-- [ ] SSO/SAML support
+- [x] SSO/SAML support — Phase 3.5: SAML 2.0, OIDC, SCIM 2.0, session management
 - [ ] SOC 2 Type II certification
-- [ ] Developer portal with interactive docs
+- [x] Developer portal with interactive docs
 - [ ] On-premise / private cloud deployment
 - [ ] Public launch
+
+---
+
+## Phase 3.5: SSO/SAML, OIDC & SCIM 2.0
+**Goal:** Enterprise SSO integration — no security team will adopt an identity platform that doesn't integrate with their own IdP
+
+### 3.5.1 SAML 2.0
+- SP-initiated flow via `@node-saml/node-saml`
+- Tenant-slug-based URLs (`/auth/saml/:tenantSlug/acs`)
+- SP metadata XML generation
+- JIT user provisioning from SAML assertions
+
+### 3.5.2 OIDC
+- Authorization Code Flow + PKCE via `openid-client`
+- Discovery endpoint auto-configuration
+- Encrypted cookie state for PKCE code verifier
+
+### 3.5.3 SCIM 2.0
+- RFC 7643/7644 compliant user/group sync
+- Separate bearer token auth (SCIM tokens don't grant API access)
+- User create/update/deactivate (soft delete)
+- Group CRUD with role mapping
+
+### 3.5.4 Session Management
+- JWT sessions signed with server secret, stored in DB for revocation
+- 8-hour default lifetime, configurable via `SSO_SESSION_TTL`
+- Dual auth in middleware: API key OR SSO session token
+
+### 3.5.5 Dashboard SSO Tab
+- Provider selector (Okta, Azure AD, Google Workspace, OneLogin, Custom SAML/OIDC)
+- Configuration forms for SAML and OIDC
+- Connection test, enable/disable toggle, SSO enforcement (enterprise-only)
+- SCIM token management and group-to-role mapping table
+
+### Phase 3.5 Deliverables
+- [x] 5 new DB tables (sso_connections, sso_sessions, scim_tokens, scim_groups, sso_audit_logs)
+- [x] Crypto helpers (AES-256-GCM encryption, JWT sessions, token generation)
+- [x] SSO service (connection CRUD, SAML/OIDC flows, session management, JIT provisioning, SCIM tokens)
+- [x] SSO management API (connections, sessions, audit, SCIM tokens)
+- [x] Public auth routes (SAML login/ACS/metadata, OIDC login/callback, session refresh/logout)
+- [x] SCIM 2.0 endpoints (Users, Groups, discovery — RFC 7644 compliant)
+- [x] Auth middleware updated for dual API key + SSO session auth
+- [x] Dashboard SSO settings tab with provider config, SCIM management
+- [x] 6 supported providers: Okta, Azure AD, Google Workspace, OneLogin, Custom SAML, Custom OIDC
+- [x] Enterprise plan gate on SSO enforcement only
 
 ---
 
@@ -283,5 +328,5 @@ Leverage the audit trail, policy engine, and integrations already built in Agent
 
 ---
 
-*Last updated: March 10, 2026*
-*Status: Phase 4 complete — all core features built*
+*Last updated: March 11, 2026*
+*Status: Phase 3.5 complete — SSO/SAML/OIDC/SCIM added, developer portal launched*

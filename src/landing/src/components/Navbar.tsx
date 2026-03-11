@@ -52,7 +52,9 @@ export default function Navbar() {
             Pricing
           </a>
           <a
-            href="#"
+            href="http://localhost:3400"
+            target="_blank"
+            rel="noopener noreferrer"
             className="text-sm transition-colors hover:text-white"
             style={{ color: "var(--text-secondary)" }}
           >
@@ -127,7 +129,9 @@ export default function Navbar() {
               Pricing
             </a>
             <a
-              href="#"
+              href="http://localhost:3400"
+              target="_blank"
+              rel="noopener noreferrer"
               className="text-sm"
               style={{ color: "var(--text-secondary)" }}
               onClick={() => setMobileOpen(false)}
