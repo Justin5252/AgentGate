@@ -243,9 +243,9 @@ Leverage the audit trail, policy engine, and integrations already built in Agent
 - [x] 16 compliance API endpoints — CRUD for frameworks, controls, evidence, reports, gaps, updates
 - [x] Dashboard compliance page — score rings, framework cards, controls table, trend chart, regulatory alerts
 - [x] Landing page section — Compliance Autopilot with 6 framework cards, dashboard mockup, capabilities, $299/mo add-on pricing
-- [ ] AI-generated remediation recommendations
-- [ ] Auditor portal (read-only access for external auditors)
-- [ ] Auto-update policies when regulations change
+- [x] AI-generated remediation recommendations — template-based per evaluator type, CRUD API, expandable fix panel in dashboard
+- [x] Auditor portal (read-only access for external auditors)
+- [x] Auto-update policies when regulations change — keyword matching, policy suggestion generation, approve/reject/apply workflow
 
 ### 4.5 Why This Works as Phase 4
 - AgentGate's audit trail is already 80% of what compliance needs
@@ -328,5 +328,5 @@ Leverage the audit trail, policy engine, and integrations already built in Agent
 
 ---
 
-*Last updated: March 11, 2026*
-*Status: Phase 3.5 complete — SSO/SAML/OIDC/SCIM added, developer portal launched*
+*Last updated: March 12, 2026*
+*Status: Phase 4 complete — Compliance Autopilot fully implemented (6 frameworks, 42 controls, remediation recommendations, policy auto-update, auditor portal)*

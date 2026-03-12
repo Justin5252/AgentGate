@@ -461,3 +461,229 @@ export async function generateSCIMToken(connectionId: string): Promise<SCIMToken
 export async function revokeSCIMToken(id: string): Promise<void> {
   return request<void>(`/api/v1/sso/scim-tokens/${id}`, { method: "DELETE" });
 }
+
+// ─── Auditor Portal ─────────────────────────────────────────────
+
+export interface AuditorInvitation {
+  id: string;
+  tenantId: string;
+  email: string;
+  name: string;
+  status: "pending" | "active" | "expired" | "revoked";
+  frameworkScopes: string[];
+  tokenPrefix: string;
+  expiresAt: string;
+  lastAccessedAt: string | null;
+  createdBy: string;
+  createdAt: string;
+  revokedAt: string | null;
+}
+
+export interface AuditorAccessLog {
+  id: string;
+  invitationId: string;
+  tenantId: string;
+  resource: string;
+  action: string;
+  ipAddress: string | null;
+  userAgent: string | null;
+  timestamp: string;
+}
+
+export interface AuditorProfileData {
+  id: string;
+  email: string;
+  name: string;
+  tenantName: string;
+  frameworkScopes: string[];
+  expiresAt: string;
+}
+
+// Admin endpoints
+export async function fetchAuditorInvitations(params?: { status?: string }): Promise<AuditorInvitation[]> {
+  return request<AuditorInvitation[]>(`/api/v1/auditor${toQueryString(params as Record<string, unknown>)}`);
+}
+
+export async function createAuditorInvitation(data: {
+  email: string;
+  name: string;
+  frameworkScopes: string[];
+  expiresInDays?: number;
+}): Promise<{ invitation: AuditorInvitation; token: string }> {
+  return request<{ invitation: AuditorInvitation; token: string }>("/api/v1/auditor", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+export async function fetchAuditorInvitation(id: string): Promise<AuditorInvitation & { accessLogCount: number }> {
+  return request<AuditorInvitation & { accessLogCount: number }>(`/api/v1/auditor/${id}`);
+}
+
+export async function revokeAuditorInvitation(id: string): Promise<void> {
+  return request<void>(`/api/v1/auditor/${id}`, { method: "DELETE" });
+}
+
+export async function fetchAuditorAccessLogs(
+  invitationId: string,
+  params?: { limit?: number; offset?: number },
+): Promise<AuditorAccessLog[]> {
+  return request<AuditorAccessLog[]>(
+    `/api/v1/auditor/${invitationId}/access-logs${toQueryString(params as Record<string, unknown>)}`,
+  );
+}
+
+// ─── Remediation ────────────────────────────────────────────────
+
+export interface RemediationStep {
+  order: number;
+  title: string;
+  description: string;
+  actionType: "configure" | "create" | "review" | "manual";
+  actionTarget?: string;
+  completed: boolean;
+}
+
+export interface RemediationRecommendation {
+  id: string;
+  controlId: string;
+  frameworkId: string;
+  source: "template" | "ai_generated";
+  summary: string;
+  steps: RemediationStep[];
+  estimatedEffort: "low" | "medium" | "high";
+  status: "pending" | "in_progress" | "completed" | "dismissed";
+  createdAt: string;
+  updatedAt: string;
+}
+
+export async function generateRemediation(
+  frameworkId: string,
+  controlId: string,
+  forceRegenerate?: boolean,
+): Promise<RemediationRecommendation> {
+  return request<RemediationRecommendation>(
+    `/api/v1/compliance/${frameworkId}/controls/${controlId}/remediation`,
+    { method: "POST", body: JSON.stringify({ forceRegenerate }) },
+  );
+}
+
+export async function generateFrameworkRemediations(
+  frameworkId: string,
+): Promise<{ frameworkId: string; generated: number; recommendations: RemediationRecommendation[] }> {
+  return request(`/api/v1/compliance/${frameworkId}/remediation/generate`, { method: "POST" });
+}
+
+export async function fetchRemediations(
+  frameworkId: string,
+  status?: string,
+): Promise<RemediationRecommendation[]> {
+  const qs = status ? `?status=${status}` : "";
+  return request<RemediationRecommendation[]>(`/api/v1/compliance/${frameworkId}/remediation${qs}`);
+}
+
+export async function updateRemediationStatus(
+  recommendationId: string,
+  status: string,
+): Promise<{ id: string; status: string }> {
+  return request(`/api/v1/compliance/remediation/${recommendationId}`, {
+    method: "PATCH",
+    body: JSON.stringify({ status }),
+  });
+}
+
+// ─── Policy Suggestions ─────────────────────────────────────────
+
+export interface PolicySuggestion {
+  id: string;
+  regulatoryUpdateId: string;
+  policyId: string | null;
+  policyName: string;
+  suggestionType: "modify" | "create" | "review";
+  description: string;
+  suggestedChanges: Record<string, unknown>;
+  impactLevel: "low" | "medium" | "high";
+  status: "pending" | "approved" | "rejected" | "applied";
+  reviewedBy: string | null;
+  reviewedAt: string | null;
+  appliedPolicyVersion: number | null;
+  createdAt: string;
+}
+
+export async function analyzeRegulatoryUpdate(
+  updateId: string,
+): Promise<{ updateId: string; generated: number; suggestions: PolicySuggestion[] }> {
+  return request(`/api/v1/compliance/regulatory-updates/${updateId}/analyze`, { method: "POST" });
+}
+
+export async function fetchPolicySuggestions(
+  updateId: string,
+  status?: string,
+): Promise<PolicySuggestion[]> {
+  const qs = status ? `?status=${status}` : "";
+  return request<PolicySuggestion[]>(`/api/v1/compliance/regulatory-updates/${updateId}/suggestions${qs}`);
+}
+
+export async function reviewPolicySuggestion(
+  suggestionId: string,
+  status: "approved" | "rejected",
+  reviewedBy?: string,
+): Promise<{ id: string; status: string; reviewedBy: string }> {
+  return request(`/api/v1/compliance/policy-suggestions/${suggestionId}`, {
+    method: "PATCH",
+    body: JSON.stringify({ status, reviewedBy }),
+  });
+}
+
+export async function applyPolicySuggestion(
+  suggestionId: string,
+): Promise<{ id: string; status: string; appliedPolicyVersion: number }> {
+  return request(`/api/v1/compliance/policy-suggestions/${suggestionId}/apply`, { method: "POST" });
+}
+
+// Auditor portal endpoints (use token in header)
+function auditorRequest<T>(path: string, token: string, options?: RequestInit): Promise<T> {
+  return request<T>(path, {
+    ...options,
+    headers: {
+      ...options?.headers,
+      Authorization: `Bearer ${token}`,
+    },
+  });
+}
+
+export async function fetchAuditorProfile(token: string): Promise<AuditorProfileData> {
+  return auditorRequest<AuditorProfileData>("/api/v1/auditor/portal/profile", token);
+}
+
+export async function fetchAuditorFrameworks(token: string): Promise<any[]> {
+  return auditorRequest<any[]>("/api/v1/auditor/portal/frameworks", token);
+}
+
+export async function fetchAuditorControls(token: string, frameworkId: string): Promise<any[]> {
+  return auditorRequest<any[]>(`/api/v1/auditor/portal/frameworks/${frameworkId}/controls`, token);
+}
+
+export async function fetchAuditorEvidence(token: string, frameworkId: string, controlId?: string): Promise<any[]> {
+  const qs = controlId ? `?controlId=${controlId}` : "";
+  return auditorRequest<any[]>(`/api/v1/auditor/portal/frameworks/${frameworkId}/evidence${qs}`, token);
+}
+
+export async function fetchAuditorReports(token: string, frameworkId: string): Promise<any[]> {
+  return auditorRequest<any[]>(`/api/v1/auditor/portal/frameworks/${frameworkId}/reports`, token);
+}
+
+export async function fetchAuditorReport(token: string, reportId: string): Promise<any> {
+  return auditorRequest<any>(`/api/v1/auditor/portal/reports/${reportId}`, token);
+}
+
+export async function fetchAuditorGapAnalysis(token: string, frameworkId: string): Promise<any> {
+  return auditorRequest<any>(`/api/v1/auditor/portal/frameworks/${frameworkId}/gap-analysis`, token);
+}
+
+export async function fetchAuditorAuditLogs(
+  token: string,
+  params?: { limit?: number; offset?: number },
+): Promise<any[]> {
+  return auditorRequest<any[]>(`/api/v1/auditor/portal/audit-logs${toQueryString(params as Record<string, unknown>)}`, token);
+}

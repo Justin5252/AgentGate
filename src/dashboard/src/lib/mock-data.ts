@@ -1,5 +1,5 @@
 import type { AgentIdentity, Policy, AuditEntry } from "@agentgate/shared";
-import type { AuditStats, Anomaly, AnomalyStats, A2AGraph, A2AChannel, A2AStats, Plan, Subscription, TenantUsage, ApiKey, TenantUser, SSOConnection, SSOSession, SCIMToken, SCIMGroup } from "./api";
+import type { AuditStats, Anomaly, AnomalyStats, A2AGraph, A2AChannel, A2AStats, Plan, Subscription, TenantUsage, ApiKey, TenantUser, SSOConnection, SSOSession, SCIMToken, SCIMGroup, AuditorInvitation, AuditorAccessLog, RemediationRecommendation, PolicySuggestion } from "./api";
 
 export const mockAgents: AgentIdentity[] = [
   {
@@ -618,6 +618,128 @@ export const mockRegulatoryUpdates: MockRegulatoryUpdate[] = [
   { id: "reg-3", frameworkId: "soc2", title: "AICPA — AI Agent Trust Services Criteria Supplement", description: "New supplemental criteria for organizations using AI agents in service delivery.", effectiveDate: "2026-07-01T00:00:00Z", impactLevel: "medium", affectedControls: ["CC6.1", "CC6.2", "CC7.1"], source: "AICPA", publishedAt: "2026-03-01T00:00:00Z", acknowledged: false },
 ];
 
+export const mockRemediations: RemediationRecommendation[] = [
+  {
+    id: "rem-1",
+    controlId: "ctrl-8",
+    frameworkId: "soc2",
+    source: "template",
+    summary: "Configure agent-to-agent communication channels",
+    steps: [
+      { order: 1, title: "Navigate to A2A page", description: "Go to the A2A Governance section in the dashboard", actionType: "configure", actionTarget: "/a2a", completed: false },
+      { order: 2, title: "Define communication channels", description: "Create channels between agent pairs with allowed actions and data types", actionType: "create", actionTarget: "a2a.channels", completed: false },
+      { order: 3, title: "Set rate limits", description: "Configure appropriate rate limits for each channel to prevent abuse", actionType: "configure", actionTarget: "channel.rateLimit", completed: false },
+    ],
+    estimatedEffort: "low",
+    status: "pending",
+    createdAt: "2026-03-10T18:00:00Z",
+    updatedAt: "2026-03-10T18:00:00Z",
+  },
+  {
+    id: "rem-2",
+    controlId: "ctrl-6",
+    frameworkId: "soc2",
+    source: "template",
+    summary: "Manual assessment required — document procedures and schedule review",
+    steps: [
+      { order: 1, title: "Document current procedures", description: "Write down existing processes and controls for this requirement", actionType: "manual", completed: true },
+      { order: 2, title: "Schedule review meeting", description: "Set up a review meeting with the compliance team", actionType: "manual", completed: false },
+      { order: 3, title: "Collect supporting evidence", description: "Gather documentation, screenshots, and artifacts", actionType: "manual", completed: false },
+      { order: 4, title: "Submit evidence", description: "Upload collected evidence to the compliance evidence store", actionType: "create", actionTarget: "evidence", completed: false },
+    ],
+    estimatedEffort: "high",
+    status: "in_progress",
+    createdAt: "2026-03-09T10:00:00Z",
+    updatedAt: "2026-03-10T14:00:00Z",
+  },
+  {
+    id: "rem-3",
+    controlId: "ctrl-15",
+    frameworkId: "gdpr",
+    source: "template",
+    summary: "Manual assessment required — document procedures and schedule review",
+    steps: [
+      { order: 1, title: "Document current procedures", description: "Write down existing DPIA processes", actionType: "manual", completed: false },
+      { order: 2, title: "Schedule review meeting", description: "Set up a review with the data protection officer", actionType: "manual", completed: false },
+      { order: 3, title: "Collect supporting evidence", description: "Gather DPIA documentation and risk assessments", actionType: "manual", completed: false },
+      { order: 4, title: "Submit evidence", description: "Upload collected evidence to the compliance evidence store", actionType: "create", actionTarget: "evidence", completed: false },
+    ],
+    estimatedEffort: "high",
+    status: "pending",
+    createdAt: "2026-03-10T18:00:00Z",
+    updatedAt: "2026-03-10T18:00:00Z",
+  },
+];
+
+export const mockPolicySuggestions: PolicySuggestion[] = [
+  {
+    id: "ps-1",
+    regulatoryUpdateId: "reg-1",
+    policyId: "pol-001",
+    policyName: "Production Deploy Guard",
+    suggestionType: "modify",
+    description: "Add escalation rules to \"Production Deploy Guard\" for high-risk agents in response to: EU AI Act — High-Risk AI Systems Requirements",
+    suggestedChanges: {
+      rulesToAdd: [{
+        name: "Compliance: Escalate high-risk (eu_ai_act)",
+        effect: "escalate",
+        priority: 0,
+        conditions: [{ field: "agent.riskLevel", operator: "in", value: ["high", "critical"] }],
+      }],
+    },
+    impactLevel: "high",
+    status: "pending",
+    reviewedBy: null,
+    reviewedAt: null,
+    appliedPolicyVersion: null,
+    createdAt: "2026-03-10T19:00:00Z",
+  },
+  {
+    id: "ps-2",
+    regulatoryUpdateId: "reg-3",
+    policyId: "pol-002",
+    policyName: "Data Access Policy",
+    suggestionType: "modify",
+    description: "Update \"Data Access Policy\" to add monitoring conditions for compliance with: AICPA — AI Agent Trust Services Criteria Supplement",
+    suggestedChanges: {
+      rulesToAdd: [{
+        name: "Compliance: Monitor (soc2)",
+        effect: "escalate",
+        priority: 5,
+        conditions: [{ field: "agent.riskLevel", operator: "equals", value: "critical" }],
+      }],
+    },
+    impactLevel: "medium",
+    status: "approved",
+    reviewedBy: "admin@company.com",
+    reviewedAt: "2026-03-10T20:00:00Z",
+    appliedPolicyVersion: null,
+    createdAt: "2026-03-10T19:30:00Z",
+  },
+  {
+    id: "ps-3",
+    regulatoryUpdateId: "reg-2",
+    policyId: null,
+    policyName: "Compliance: GDPR — Updated Guidance on AI Decision-Making",
+    suggestionType: "create",
+    description: "No existing policies cover the affected controls. Create a new compliance policy to address: Art.22, Art.35",
+    suggestedChanges: {
+      newPolicy: {
+        name: "Compliance: GDPR AI Decision-Making",
+        description: "Auto-suggested policy for GDPR automated decision-making guidance",
+        rules: [{ name: "Escalate high-risk agents", effect: "escalate", priority: 1, conditions: [{ field: "agent.riskLevel", operator: "in", value: ["high", "critical"] }] }],
+        targets: { resources: ["*"], actions: ["*"] },
+      },
+    },
+    impactLevel: "medium",
+    status: "pending",
+    reviewedBy: null,
+    reviewedAt: null,
+    appliedPolicyVersion: null,
+    createdAt: "2026-03-10T19:00:00Z",
+  },
+];
+
 export const mockScoreHistory = [
   { date: "2026-01-15", score: 45 },
   { date: "2026-01-30", score: 52 },
@@ -707,5 +829,95 @@ export const mockSCIMGroups: SCIMGroup[] = [
     mappedRole: "auditor",
     createdAt: "2026-03-06T10:00:00Z",
     updatedAt: "2026-03-10T14:00:00Z",
+  },
+];
+
+// ─── Auditor Portal ─────────────────────────────────────────────
+
+export const mockAuditorInvitations: AuditorInvitation[] = [
+  {
+    id: "aud-inv-1",
+    tenantId: "tenant-1",
+    email: "jane.smith@auditfirm.com",
+    name: "Jane Smith",
+    status: "active",
+    frameworkScopes: ["soc2", "gdpr"],
+    tokenPrefix: "aud_a1b2c3d4",
+    expiresAt: "2026-04-10T00:00:00Z",
+    lastAccessedAt: "2026-03-10T14:30:00Z",
+    createdBy: "user-1",
+    createdAt: "2026-03-01T10:00:00Z",
+    revokedAt: null,
+  },
+  {
+    id: "aud-inv-2",
+    tenantId: "tenant-1",
+    email: "bob.jones@compliance.co",
+    name: "Bob Jones",
+    status: "pending",
+    frameworkScopes: ["hipaa"],
+    tokenPrefix: "aud_e5f6g7h8",
+    expiresAt: "2026-04-15T00:00:00Z",
+    lastAccessedAt: null,
+    createdBy: "user-1",
+    createdAt: "2026-03-08T09:00:00Z",
+    revokedAt: null,
+  },
+  {
+    id: "aud-inv-3",
+    tenantId: "tenant-1",
+    email: "old.auditor@expired.com",
+    name: "Old Auditor",
+    status: "expired",
+    frameworkScopes: ["soc2"],
+    tokenPrefix: "aud_x9y0z1a2",
+    expiresAt: "2026-02-28T00:00:00Z",
+    lastAccessedAt: "2026-02-25T11:00:00Z",
+    createdBy: "user-1",
+    createdAt: "2026-01-29T10:00:00Z",
+    revokedAt: null,
+  },
+];
+
+export const mockAuditorAccessLogs: AuditorAccessLog[] = [
+  {
+    id: "alog-1",
+    invitationId: "aud-inv-1",
+    tenantId: "tenant-1",
+    resource: "portal/frameworks",
+    action: "list",
+    ipAddress: "203.0.113.42",
+    userAgent: "Mozilla/5.0",
+    timestamp: "2026-03-10T14:30:00Z",
+  },
+  {
+    id: "alog-2",
+    invitationId: "aud-inv-1",
+    tenantId: "tenant-1",
+    resource: "portal/frameworks/soc2/controls",
+    action: "list",
+    ipAddress: "203.0.113.42",
+    userAgent: "Mozilla/5.0",
+    timestamp: "2026-03-10T14:28:00Z",
+  },
+  {
+    id: "alog-3",
+    invitationId: "aud-inv-1",
+    tenantId: "tenant-1",
+    resource: "portal/frameworks/soc2/evidence",
+    action: "list",
+    ipAddress: "203.0.113.42",
+    userAgent: "Mozilla/5.0",
+    timestamp: "2026-03-10T14:25:00Z",
+  },
+  {
+    id: "alog-4",
+    invitationId: "aud-inv-1",
+    tenantId: "tenant-1",
+    resource: "portal/profile",
+    action: "view",
+    ipAddress: "203.0.113.42",
+    userAgent: "Mozilla/5.0",
+    timestamp: "2026-03-10T14:20:00Z",
   },
 ];

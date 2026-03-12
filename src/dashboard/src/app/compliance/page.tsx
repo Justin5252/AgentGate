@@ -1,12 +1,15 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, Fragment } from "react";
 import {
   mockFrameworks,
   mockComplianceControls,
   mockRegulatoryUpdates,
   mockScoreHistory,
+  mockRemediations,
+  mockPolicySuggestions,
 } from "@/lib/mock-data";
+import type { RemediationRecommendation, PolicySuggestion } from "@/lib/api";
 
 const statusColors: Record<string, string> = {
   passing: "#06D6A0",
@@ -35,6 +38,19 @@ const impactColors: Record<string, string> = {
   high: "#EF4444",
   medium: "#F59E0B",
   low: "#3B82F6",
+};
+
+const remediationStatusColors: Record<string, string> = {
+  pending: "#F59E0B",
+  in_progress: "#3B82F6",
+  completed: "#06D6A0",
+  dismissed: "#64748B",
+};
+
+const suggestionTypeColors: Record<string, string> = {
+  modify: "#3B82F6",
+  create: "#06D6A0",
+  review: "#F59E0B",
 };
 
 function ScoreRing({ score, size = 120 }: { score: number; size?: number }) {
@@ -129,8 +145,192 @@ function ScoreTrendChart({ data }: { data: { date: string; score: number }[] }) 
   );
 }
 
+function RemediationPanel({ rec, onStatusChange }: { rec: RemediationRecommendation; onStatusChange: (id: string, status: string) => void }) {
+  return (
+    <div className="px-4 py-4 space-y-3" style={{ background: "rgba(59,130,246,0.03)" }}>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <span
+            className="inline-flex px-2 py-0.5 rounded-full text-xs font-medium"
+            style={{ background: `${remediationStatusColors[rec.status]}15`, color: remediationStatusColors[rec.status] }}
+          >
+            {rec.status.replace("_", " ")}
+          </span>
+          <span
+            className="inline-flex px-2 py-0.5 rounded-full text-xs font-medium"
+            style={{ background: "rgba(100,116,139,0.15)", color: "#94A3B8" }}
+          >
+            {rec.source === "template" ? "Template" : "AI Generated"}
+          </span>
+          <span className="text-xs" style={{ color: "var(--text-muted)" }}>
+            Effort: {rec.estimatedEffort}
+          </span>
+        </div>
+        <div className="flex items-center gap-2">
+          <select
+            value={rec.status}
+            onChange={(e) => onStatusChange(rec.id, e.target.value)}
+            className="text-xs rounded-lg px-2 py-1 border"
+            style={{ background: "var(--bg-card)", borderColor: "var(--border)", color: "var(--text-primary)" }}
+          >
+            <option value="pending">Pending</option>
+            <option value="in_progress">In Progress</option>
+            <option value="completed">Completed</option>
+            <option value="dismissed">Dismissed</option>
+          </select>
+        </div>
+      </div>
+      <p className="text-sm font-medium text-white">{rec.summary}</p>
+      <div className="space-y-2">
+        {rec.steps.map((step) => (
+          <div key={step.order} className="flex items-start gap-3">
+            <div
+              className="mt-0.5 w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0"
+              style={{
+                borderColor: step.completed ? "#06D6A0" : "#475569",
+                background: step.completed ? "rgba(6,214,160,0.1)" : "transparent",
+              }}
+            >
+              {step.completed && (
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#06D6A0" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+              )}
+            </div>
+            <div className="flex-1">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-medium text-white">{step.title}</span>
+                <span
+                  className="inline-flex px-1.5 py-0.5 rounded text-xs"
+                  style={{ background: "rgba(100,116,139,0.15)", color: "#64748B", fontSize: "10px" }}
+                >
+                  {step.actionType}
+                </span>
+              </div>
+              <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>{step.description}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function SuggestionCard({
+  suggestion,
+  onReview,
+  onApply,
+}: {
+  suggestion: PolicySuggestion;
+  onReview: (id: string, status: "approved" | "rejected") => void;
+  onApply: (id: string) => void;
+}) {
+  const changes = suggestion.suggestedChanges as Record<string, any>;
+  const rules = changes.rulesToAdd ?? changes.newPolicy?.rules ?? [];
+
+  return (
+    <div
+      className="rounded-lg border p-4 mt-2"
+      style={{
+        background: "var(--bg-card)",
+        borderColor: "var(--border)",
+        opacity: suggestion.status === "rejected" ? 0.5 : 1,
+      }}
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex-1">
+          <div className="flex items-center gap-2 mb-1">
+            <span
+              className="inline-flex px-2 py-0.5 rounded-full text-xs font-medium"
+              style={{ background: `${suggestionTypeColors[suggestion.suggestionType]}15`, color: suggestionTypeColors[suggestion.suggestionType] }}
+            >
+              {suggestion.suggestionType}
+            </span>
+            <span
+              className="inline-flex px-2 py-0.5 rounded-full text-xs font-medium"
+              style={{ background: `${impactColors[suggestion.impactLevel]}15`, color: impactColors[suggestion.impactLevel] }}
+            >
+              {suggestion.impactLevel} impact
+            </span>
+            {suggestion.status !== "pending" && (
+              <span
+                className="inline-flex px-2 py-0.5 rounded-full text-xs font-medium"
+                style={{
+                  background: suggestion.status === "approved" ? "rgba(6,214,160,0.15)" : suggestion.status === "applied" ? "rgba(59,130,246,0.15)" : "rgba(100,116,139,0.15)",
+                  color: suggestion.status === "approved" ? "#06D6A0" : suggestion.status === "applied" ? "#3B82F6" : "#64748B",
+                }}
+              >
+                {suggestion.status}
+              </span>
+            )}
+          </div>
+          <h5 className="text-sm font-medium text-white">{suggestion.policyName}</h5>
+          <p className="text-xs mt-1" style={{ color: "var(--text-secondary)" }}>{suggestion.description}</p>
+
+          {/* Preview suggested rules */}
+          {rules.length > 0 && (
+            <div className="mt-2 space-y-1">
+              {rules.map((rule: any, i: number) => (
+                <div
+                  key={i}
+                  className="flex items-center gap-2 px-2 py-1 rounded text-xs font-mono"
+                  style={{ background: "rgba(100,116,139,0.1)" }}
+                >
+                  <span style={{ color: rule.effect === "escalate" ? "#F59E0B" : rule.effect === "deny" ? "#EF4444" : "#06D6A0" }}>
+                    {rule.effect}
+                  </span>
+                  <span style={{ color: "var(--text-muted)" }}>{rule.name}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="flex items-center gap-2 flex-shrink-0">
+          {suggestion.status === "pending" && (
+            <>
+              <button
+                onClick={() => onReview(suggestion.id, "approved")}
+                className="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors hover:opacity-90"
+                style={{ background: "rgba(6,214,160,0.15)", color: "#06D6A0" }}
+              >
+                Approve
+              </button>
+              <button
+                onClick={() => onReview(suggestion.id, "rejected")}
+                className="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors hover:opacity-90"
+                style={{ background: "rgba(239,68,68,0.15)", color: "#EF4444" }}
+              >
+                Reject
+              </button>
+            </>
+          )}
+          {suggestion.status === "approved" && !suggestion.appliedPolicyVersion && (
+            <button
+              onClick={() => onApply(suggestion.id)}
+              className="px-3 py-1.5 rounded-lg text-xs font-medium text-white transition-colors hover:opacity-90"
+              style={{ background: "linear-gradient(135deg, #3B82F6, #2563EB)" }}
+            >
+              Apply
+            </button>
+          )}
+          {suggestion.status === "applied" && (
+            <span className="text-xs" style={{ color: "#06D6A0" }}>
+              v{suggestion.appliedPolicyVersion}
+            </span>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function CompliancePage() {
   const [selectedFramework, setSelectedFramework] = useState("soc2");
+  const [expandedControl, setExpandedControl] = useState<string | null>(null);
+  const [remediations, setRemediations] = useState<RemediationRecommendation[]>(mockRemediations);
+  const [suggestions, setSuggestions] = useState<PolicySuggestion[]>(mockPolicySuggestions);
+  const [expandedUpdate, setExpandedUpdate] = useState<string | null>(null);
 
   const enabledFrameworks = mockFrameworks.filter((f) => f.enabled);
   const aggregateScore =
@@ -144,6 +344,43 @@ export default function CompliancePage() {
   );
 
   const unacknowledgedUpdates = mockRegulatoryUpdates.filter((u) => !u.acknowledged);
+
+  function handleRemediationStatusChange(id: string, status: string) {
+    setRemediations((prev) =>
+      prev.map((r) => (r.id === id ? { ...r, status: status as any, updatedAt: new Date().toISOString() } : r)),
+    );
+  }
+
+  function handleGenerateRecommendations() {
+    // In production this calls the API; mock just shows existing
+    alert("In production, this generates recommendations for all failing controls via POST /:frameworkId/remediation/generate");
+  }
+
+  function getRemediationForControl(controlId: string): RemediationRecommendation | undefined {
+    return remediations.find((r) => r.controlId === controlId && r.frameworkId === selectedFramework);
+  }
+
+  function handleSuggestionReview(id: string, status: "approved" | "rejected") {
+    setSuggestions((prev) =>
+      prev.map((s) =>
+        s.id === id
+          ? { ...s, status, reviewedBy: "admin@company.com", reviewedAt: new Date().toISOString() }
+          : s,
+      ),
+    );
+  }
+
+  function handleSuggestionApply(id: string) {
+    setSuggestions((prev) =>
+      prev.map((s) =>
+        s.id === id ? { ...s, status: "applied" as const, appliedPolicyVersion: 2 } : s,
+      ),
+    );
+  }
+
+  function handleAnalyzeImpact(updateId: string) {
+    setExpandedUpdate(expandedUpdate === updateId ? null : updateId);
+  }
 
   return (
     <div className="space-y-8">
@@ -271,9 +508,18 @@ export default function CompliancePage() {
 
       {/* Controls Table */}
       <div>
-        <p className="text-xs font-semibold uppercase tracking-wider mb-4" style={{ color: "var(--text-muted)" }}>
-          Controls — {mockFrameworks.find((f) => f.frameworkId === selectedFramework)?.name ?? selectedFramework}
-        </p>
+        <div className="flex items-center justify-between mb-4">
+          <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>
+            Controls — {mockFrameworks.find((f) => f.frameworkId === selectedFramework)?.name ?? selectedFramework}
+          </p>
+          <button
+            onClick={handleGenerateRecommendations}
+            className="px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors hover:bg-white/5"
+            style={{ borderColor: "var(--border)", color: "var(--text-secondary)" }}
+          >
+            Generate Recommendations
+          </button>
+        </div>
         <div
           className="rounded-xl border overflow-hidden"
           style={{ background: "var(--bg-card)", borderColor: "var(--border)" }}
@@ -281,7 +527,7 @@ export default function CompliancePage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b" style={{ borderColor: "var(--border)" }}>
-                {["Code", "Title", "Category", "Status", "Severity", "Evidence", "Auto"].map((h) => (
+                {["Code", "Title", "Category", "Status", "Severity", "Evidence", "Auto", "Remediation"].map((h) => (
                   <th
                     key={h}
                     className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider"
@@ -293,60 +539,110 @@ export default function CompliancePage() {
               </tr>
             </thead>
             <tbody>
-              {controls.map((ctrl) => (
-                <tr
-                  key={ctrl.id}
-                  className="border-b transition-colors hover:bg-white/[0.02]"
-                  style={{ borderColor: "var(--border)" }}
-                >
-                  <td className="px-4 py-3 font-mono text-xs" style={{ color: "var(--blue)" }}>
-                    {ctrl.controlCode}
-                  </td>
-                  <td className="px-4 py-3" style={{ color: "var(--text-primary)" }}>
-                    {ctrl.title}
-                  </td>
-                  <td className="px-4 py-3 text-xs" style={{ color: "var(--text-muted)" }}>
-                    {ctrl.category}
-                  </td>
-                  <td className="px-4 py-3">
-                    <span
-                      className="inline-flex px-2 py-0.5 rounded-full text-xs font-medium"
-                      style={{
-                        background: `${statusColors[ctrl.status]}15`,
-                        color: statusColors[ctrl.status],
-                      }}
+              {controls.map((ctrl) => {
+                const rec = getRemediationForControl(ctrl.id);
+                const isExpanded = expandedControl === ctrl.id;
+                const needsRemediation = ctrl.status === "failing" || ctrl.status === "warning";
+
+                return (
+                  <Fragment key={ctrl.id}>
+                    <tr
+                      className="border-b transition-colors hover:bg-white/[0.02]"
+                      style={{ borderColor: "var(--border)" }}
                     >
-                      {statusLabels[ctrl.status] ?? ctrl.status}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3">
-                    <span
-                      className="inline-flex px-2 py-0.5 rounded-full text-xs font-medium"
-                      style={{
-                        background: `${severityColors[ctrl.severity]}15`,
-                        color: severityColors[ctrl.severity],
-                      }}
-                    >
-                      {ctrl.severity}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-xs" style={{ color: "var(--text-secondary)" }}>
-                    {ctrl.evidenceCount}
-                  </td>
-                  <td className="px-4 py-3">
-                    {ctrl.automatable ? (
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#06D6A0" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <polyline points="20 6 9 17 4 12" />
-                      </svg>
-                    ) : (
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#64748B" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <line x1="18" y1="6" x2="6" y2="18" />
-                        <line x1="6" y1="6" x2="18" y2="18" />
-                      </svg>
+                      <td className="px-4 py-3 font-mono text-xs" style={{ color: "var(--blue)" }}>
+                        {ctrl.controlCode}
+                      </td>
+                      <td className="px-4 py-3" style={{ color: "var(--text-primary)" }}>
+                        {ctrl.title}
+                      </td>
+                      <td className="px-4 py-3 text-xs" style={{ color: "var(--text-muted)" }}>
+                        {ctrl.category}
+                      </td>
+                      <td className="px-4 py-3">
+                        <span
+                          className="inline-flex px-2 py-0.5 rounded-full text-xs font-medium"
+                          style={{
+                            background: `${statusColors[ctrl.status]}15`,
+                            color: statusColors[ctrl.status],
+                          }}
+                        >
+                          {statusLabels[ctrl.status] ?? ctrl.status}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span
+                          className="inline-flex px-2 py-0.5 rounded-full text-xs font-medium"
+                          style={{
+                            background: `${severityColors[ctrl.severity]}15`,
+                            color: severityColors[ctrl.severity],
+                          }}
+                        >
+                          {ctrl.severity}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-xs" style={{ color: "var(--text-secondary)" }}>
+                        {ctrl.evidenceCount}
+                      </td>
+                      <td className="px-4 py-3">
+                        {ctrl.automatable ? (
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#06D6A0" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <polyline points="20 6 9 17 4 12" />
+                          </svg>
+                        ) : (
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#64748B" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <line x1="18" y1="6" x2="6" y2="18" />
+                            <line x1="6" y1="6" x2="18" y2="18" />
+                          </svg>
+                        )}
+                      </td>
+                      <td className="px-4 py-3">
+                        {needsRemediation ? (
+                          <button
+                            onClick={() => setExpandedControl(isExpanded ? null : ctrl.id)}
+                            className="px-2.5 py-1 rounded-lg text-xs font-medium transition-colors"
+                            style={{
+                              background: rec
+                                ? `${remediationStatusColors[rec.status]}15`
+                                : "rgba(239,68,68,0.15)",
+                              color: rec
+                                ? remediationStatusColors[rec.status]
+                                : "#EF4444",
+                            }}
+                          >
+                            {rec ? rec.status.replace("_", " ") : "Fix"}
+                          </button>
+                        ) : (
+                          <span className="text-xs" style={{ color: "#06D6A0" }}>
+                            OK
+                          </span>
+                        )}
+                      </td>
+                    </tr>
+                    {isExpanded && rec && (
+                      <tr>
+                        <td colSpan={8} className="p-0">
+                          <RemediationPanel rec={rec} onStatusChange={handleRemediationStatusChange} />
+                        </td>
+                      </tr>
                     )}
-                  </td>
-                </tr>
-              ))}
+                    {isExpanded && !rec && needsRemediation && (
+                      <tr>
+                        <td colSpan={8} className="p-0">
+                          <div className="px-4 py-4" style={{ background: "rgba(59,130,246,0.03)" }}>
+                            <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+                              No recommendation generated yet. Click &quot;Generate Recommendations&quot; above or use the API:
+                              <code className="ml-1 text-xs" style={{ color: "var(--blue)" }}>
+                                POST /compliance/{selectedFramework}/controls/{ctrl.id}/remediation
+                              </code>
+                            </p>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </Fragment>
+                );
+              })}
             </tbody>
           </table>
         </div>
@@ -368,51 +664,99 @@ export default function CompliancePage() {
           )}
         </div>
         <div className="space-y-3">
-          {mockRegulatoryUpdates.map((update) => (
-            <div
-              key={update.id}
-              className="rounded-xl border p-4 flex items-start justify-between gap-4"
-              style={{ background: "var(--bg-card)", borderColor: "var(--border)" }}
-            >
-              <div className="flex-1">
-                <div className="flex items-center gap-2 mb-1">
-                  <span
-                    className="inline-flex px-2 py-0.5 rounded-full text-xs font-medium"
-                    style={{
-                      background: `${impactColors[update.impactLevel]}15`,
-                      color: impactColors[update.impactLevel],
-                    }}
-                  >
-                    {update.impactLevel} impact
-                  </span>
-                  <span className="text-xs" style={{ color: "var(--text-muted)" }}>
-                    {update.frameworkId.toUpperCase().replace("_", " ")}
-                  </span>
-                </div>
-                <h4 className="font-medium text-white text-sm">{update.title}</h4>
-                <p className="text-xs mt-1" style={{ color: "var(--text-secondary)" }}>
-                  {update.description}
-                </p>
-                <div className="flex items-center gap-4 mt-2 text-xs" style={{ color: "var(--text-muted)" }}>
-                  <span>Effective: {new Date(update.effectiveDate).toLocaleDateString()}</span>
-                  <span>Source: {update.source}</span>
-                  <span>Affects: {update.affectedControls.join(", ")}</span>
+          {mockRegulatoryUpdates.map((update) => {
+            const updateSuggestions = suggestions.filter((s) => s.regulatoryUpdateId === update.id);
+            const isExpanded = expandedUpdate === update.id;
+
+            return (
+              <div key={update.id}>
+                <div
+                  className="rounded-xl border p-4"
+                  style={{ background: "var(--bg-card)", borderColor: "var(--border)" }}
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span
+                          className="inline-flex px-2 py-0.5 rounded-full text-xs font-medium"
+                          style={{
+                            background: `${impactColors[update.impactLevel]}15`,
+                            color: impactColors[update.impactLevel],
+                          }}
+                        >
+                          {update.impactLevel} impact
+                        </span>
+                        <span className="text-xs" style={{ color: "var(--text-muted)" }}>
+                          {update.frameworkId.toUpperCase().replace("_", " ")}
+                        </span>
+                      </div>
+                      <h4 className="font-medium text-white text-sm">{update.title}</h4>
+                      <p className="text-xs mt-1" style={{ color: "var(--text-secondary)" }}>
+                        {update.description}
+                      </p>
+                      <div className="flex items-center gap-4 mt-2 text-xs" style={{ color: "var(--text-muted)" }}>
+                        <span>Effective: {new Date(update.effectiveDate).toLocaleDateString()}</span>
+                        <span>Source: {update.source}</span>
+                        <span>Affects: {update.affectedControls.join(", ")}</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => handleAnalyzeImpact(update.id)}
+                        className="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors hover:opacity-90"
+                        style={{
+                          background: isExpanded ? "rgba(59,130,246,0.15)" : "linear-gradient(135deg, #3B82F6, #2563EB)",
+                          color: isExpanded ? "#3B82F6" : "white",
+                        }}
+                      >
+                        {isExpanded ? "Hide" : "Analyze Impact"}
+                      </button>
+                      {!update.acknowledged ? (
+                        <button
+                          className="px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors hover:bg-white/5"
+                          style={{ borderColor: "var(--border)", color: "var(--text-secondary)" }}
+                        >
+                          Acknowledge
+                        </button>
+                      ) : (
+                        <span className="text-xs" style={{ color: "#06D6A0" }}>
+                          Acknowledged
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Expanded suggestions */}
+                  {isExpanded && (
+                    <div className="mt-4 space-y-2">
+                      {updateSuggestions.length > 0 ? (
+                        <>
+                          <p className="text-xs font-semibold" style={{ color: "var(--text-muted)" }}>
+                            Policy Suggestions ({updateSuggestions.length})
+                          </p>
+                          {updateSuggestions.map((s) => (
+                            <SuggestionCard
+                              key={s.id}
+                              suggestion={s}
+                              onReview={handleSuggestionReview}
+                              onApply={handleSuggestionApply}
+                            />
+                          ))}
+                        </>
+                      ) : (
+                        <p className="text-xs py-2" style={{ color: "var(--text-muted)" }}>
+                          No policy suggestions generated yet. In production, clicking &quot;Analyze Impact&quot; calls
+                          <code className="ml-1" style={{ color: "var(--blue)" }}>
+                            POST /compliance/regulatory-updates/{update.id}/analyze
+                          </code>
+                        </p>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
-              {!update.acknowledged ? (
-                <button
-                  className="px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors hover:bg-white/5"
-                  style={{ borderColor: "var(--border)", color: "var(--text-secondary)" }}
-                >
-                  Acknowledge
-                </button>
-              ) : (
-                <span className="text-xs" style={{ color: "#06D6A0" }}>
-                  Acknowledged
-                </span>
-              )}
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </div>

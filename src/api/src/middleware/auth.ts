@@ -12,7 +12,8 @@ declare module "fastify" {
     apiKey?: ApiKeyRecord;
     tenantId?: string | null;
     ssoSession?: { userId: string; tenantId: string; sessionId: string };
-    authMethod?: "api_key" | "sso_session" | "none";
+    auditorInvitation?: { id: string; tenantId: string; email: string; frameworkScopes: string[] };
+    authMethod?: "api_key" | "sso_session" | "auditor_token" | "none";
   }
 }
 
@@ -110,6 +111,22 @@ export const authMiddleware = fp(async function authMiddlewarePlugin(server: Fas
           };
           request.tenantId = result.session.tenantId;
           request.authMethod = "sso_session";
+          return;
+        }
+      }
+
+      // Try auditor token
+      if (token.startsWith("aud_") && server.auditorService) {
+        const result = await server.auditorService.validateToken(token);
+        if (result.valid && result.invitation) {
+          request.auditorInvitation = {
+            id: result.invitation.id,
+            tenantId: result.invitation.tenantId,
+            email: result.invitation.email,
+            frameworkScopes: result.invitation.frameworkScopes,
+          };
+          request.tenantId = result.invitation.tenantId;
+          request.authMethod = "auditor_token";
           return;
         }
       }

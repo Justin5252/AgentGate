@@ -25,6 +25,10 @@ import { BillingService } from "./services/billing.js";
 import { UsageTracker } from "./services/usage-tracker.js";
 import { ComplianceService } from "./services/compliance.js";
 import { SSOService } from "./services/sso.js";
+import { AuditorService } from "./services/auditor.js";
+import { RemediationService } from "./services/remediation.js";
+import { PolicySuggestionService } from "./services/policy-suggestions.js";
+import { auditorRoutes } from "./routes/auditor.js";
 import type { Database } from "./db/index.js";
 
 declare module "fastify" {
@@ -35,7 +39,10 @@ declare module "fastify" {
     billingService: BillingService;
     usageTracker: UsageTracker;
     complianceService: ComplianceService;
+    remediationService: RemediationService;
+    policySuggestionService: PolicySuggestionService;
     ssoService: SSOService;
+    auditorService: AuditorService;
   }
 }
 
@@ -81,7 +88,10 @@ export async function buildServer(options: BuildServerOptions) {
   const billingService = new BillingService(db);
   const usageTracker = new UsageTracker(db);
   const complianceService = new ComplianceService(db);
+  const remediationService = new RemediationService(db);
+  const policySuggestionService = new PolicySuggestionService(db);
   const ssoService = new SSOService(db);
+  const auditorService = new AuditorService(db);
 
   server.decorate("db", db);
   server.decorate("evaluator", evaluator);
@@ -89,7 +99,10 @@ export async function buildServer(options: BuildServerOptions) {
   server.decorate("billingService", billingService);
   server.decorate("usageTracker", usageTracker);
   server.decorate("complianceService", complianceService);
+  server.decorate("remediationService", remediationService);
+  server.decorate("policySuggestionService", policySuggestionService);
   server.decorate("ssoService", ssoService);
+  server.decorate("auditorService", auditorService);
 
   // Register auth middleware (must come before routes)
   await server.register(authMiddleware);
@@ -212,6 +225,18 @@ export async function buildServer(options: BuildServerOptions) {
       </div>
     </div>
 
+    <div class="section-title">Auditor Portal</div>
+    <div class="endpoints">
+      <div class="endpoint">
+        <span class="endpoint-name"><span class="method">GET</span> Auditor Invitations</span>
+        <span class="endpoint-path"><a href="/api/v1/auditor">/api/v1/auditor</a></span>
+      </div>
+      <div class="endpoint">
+        <span class="endpoint-name"><span class="method">GET</span> Auditor Portal</span>
+        <span class="endpoint-path">/api/v1/auditor/portal/profile</span>
+      </div>
+    </div>
+
     <div class="section-title">Management</div>
     <div class="endpoints">
       <div class="endpoint">
@@ -250,6 +275,7 @@ export async function buildServer(options: BuildServerOptions) {
         sso: "/api/v1/sso",
         auth: "/api/v1/auth",
         scim: "/api/v1/scim/:tenantSlug",
+        auditor: "/api/v1/auditor",
       },
     };
   });
@@ -269,6 +295,7 @@ export async function buildServer(options: BuildServerOptions) {
   await server.register(ssoRoutes, { prefix: "/api/v1/sso" });
   await server.register(authRoutes, { prefix: "/api/v1/auth" });
   await server.register(scimRoutes, { prefix: "/api/v1/scim/:tenantSlug" });
+  await server.register(auditorRoutes, { prefix: "/api/v1/auditor" });
 
   return server;
 }

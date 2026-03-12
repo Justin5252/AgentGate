@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
+import { useAuth } from "@/lib/auth-context";
 
 const navItems = [
   {
@@ -72,6 +73,15 @@ const navItems = [
       </svg>
     ),
   },
+  {
+    label: "Auditors",
+    href: "/auditors",
+    icon: (
+      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+      </svg>
+    ),
+  },
 ];
 
 const bottomNavItems = [
@@ -108,6 +118,7 @@ const bottomNavItems = [
 export function Sidebar() {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { mode, auditorProfile, logout } = useAuth();
 
   const isActive = (href: string) => {
     if (href === "/") return pathname === "/";
@@ -146,7 +157,7 @@ export function Sidebar() {
         }}
       >
         {/* Logo */}
-        <div className="flex items-center gap-3 px-5 py-6 border-b" style={{ borderColor: "var(--border)" }}>
+        <Link href="/" onClick={() => setMobileOpen(false)} className="flex items-center gap-3 px-5 py-6 border-b transition-opacity hover:opacity-80" style={{ borderColor: "var(--border)" }}>
           <div
             className="flex items-center justify-center w-9 h-9 rounded-lg"
             style={{
@@ -162,15 +173,18 @@ export function Sidebar() {
               AgentGate
             </h1>
             <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-              Admin Dashboard
+              {mode === "auditor" ? "Auditor Portal" : "Admin Dashboard"}
             </p>
           </div>
-        </div>
+        </Link>
 
         {/* Navigation */}
         <nav className="flex-1 px-3 py-4 flex flex-col">
           <div className="space-y-1 flex-1">
-            {navItems.map((item) => {
+            {(mode === "auditor"
+              ? navItems.filter((i) => i.label === "Compliance" || i.label === "Audit Log")
+              : navItems
+            ).map((item) => {
               const active = isActive(item.href);
               return (
                 <Link
@@ -196,30 +210,52 @@ export function Sidebar() {
           {/* Divider */}
           <div className="my-2 mx-3 border-t" style={{ borderColor: "var(--border)" }} />
 
+          {/* Auditor info banner */}
+          {mode === "auditor" && auditorProfile && (
+            <div className="mx-3 mb-2 p-3 rounded-lg text-xs" style={{ background: "rgba(59,130,246,0.1)", border: "1px solid rgba(59,130,246,0.2)" }}>
+              <div className="font-medium" style={{ color: "var(--blue)" }}>Read-Only Access</div>
+              <div style={{ color: "var(--text-secondary)" }} className="mt-1">
+                {auditorProfile.name}
+              </div>
+              <div style={{ color: "var(--text-muted)" }} className="mt-0.5">
+                Expires {new Date(auditorProfile.expiresAt).toLocaleDateString()}
+              </div>
+              <button
+                onClick={logout}
+                className="mt-2 text-xs font-medium hover:underline"
+                style={{ color: "var(--text-secondary)" }}
+              >
+                Sign Out
+              </button>
+            </div>
+          )}
+
           {/* Bottom nav items */}
-          <div className="space-y-1">
-            {bottomNavItems.map((item) => {
-              const active = isActive(item.href);
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  onClick={() => setMobileOpen(false)}
-                  className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150 ${
-                    active ? "shadow-sm" : "hover:bg-white/[0.03]"
-                  }`}
-                  style={{
-                    background: active ? "rgba(59, 130, 246, 0.12)" : undefined,
-                    color: active ? "var(--blue)" : "var(--text-secondary)",
-                    borderLeft: active ? "2px solid var(--blue)" : "2px solid transparent",
-                  }}
-                >
-                  {item.icon}
-                  {item.label}
-                </Link>
-              );
-            })}
-          </div>
+          {mode !== "auditor" && (
+            <div className="space-y-1">
+              {bottomNavItems.map((item) => {
+                const active = isActive(item.href);
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={() => setMobileOpen(false)}
+                    className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150 ${
+                      active ? "shadow-sm" : "hover:bg-white/[0.03]"
+                    }`}
+                    style={{
+                      background: active ? "rgba(59, 130, 246, 0.12)" : undefined,
+                      color: active ? "var(--blue)" : "var(--text-secondary)",
+                      borderLeft: active ? "2px solid var(--blue)" : "2px solid transparent",
+                    }}
+                  >
+                    {item.icon}
+                    {item.label}
+                  </Link>
+                );
+              })}
+            </div>
+          )}
         </nav>
 
         {/* Footer */}

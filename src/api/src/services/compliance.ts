@@ -15,7 +15,7 @@ import {
 
 // ─── Framework Definitions ───────────────────────────────────────
 
-interface FrameworkDef {
+export interface FrameworkDef {
   id: string;
   name: string;
   version: string;
@@ -23,7 +23,7 @@ interface FrameworkDef {
   controls: ControlDef[];
 }
 
-interface ControlDef {
+export interface ControlDef {
   controlCode: string;
   title: string;
   description: string;
@@ -33,7 +33,7 @@ interface ControlDef {
   evaluator: string; // key for evaluation logic
 }
 
-const FRAMEWORK_DEFS: Record<string, FrameworkDef> = {
+export const FRAMEWORK_DEFS: Record<string, FrameworkDef> = {
   soc2: {
     id: "soc2",
     name: "SOC 2 Type II",

@@ -23,6 +23,12 @@ import type {
   SSOProtocol,
   SSOEventType,
   ProvisionMethod,
+  AuditorInvitationStatus,
+  RemediationSource,
+  RemediationStatus,
+  RemediationStep,
+  PolicySuggestionStatus,
+  SuggestedPolicyChange,
 } from "@agentgate/shared";
 
 // ─── Tenants ─────────────────────────────────────────────────────────
@@ -548,5 +554,115 @@ export const ssoAuditLogs = pgTable(
     index("sso_audit_logs_tenant_id_idx").on(table.tenantId),
     index("sso_audit_logs_event_idx").on(table.event),
     index("sso_audit_logs_created_at_idx").on(table.createdAt),
+  ],
+);
+
+// ─── Auditor Invitations ────────────────────────────────────────
+
+export const auditorInvitations = pgTable(
+  "auditor_invitations",
+  {
+    id: text("id").primaryKey(),
+    tenantId: text("tenant_id")
+      .notNull()
+      .references(() => tenants.id),
+    email: text("email").notNull(),
+    name: text("name").notNull(),
+    status: text("status").notNull().default("pending").$type<AuditorInvitationStatus>(),
+    frameworkScopes: jsonb("framework_scopes").notNull().$type<string[]>(),
+    tokenHash: text("token_hash").notNull(),
+    tokenPrefix: text("token_prefix").notNull(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    lastAccessedAt: timestamp("last_accessed_at", { withTimezone: true }),
+    createdBy: text("created_by").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+    revokedAt: timestamp("revoked_at", { withTimezone: true }),
+  },
+  (table) => [
+    uniqueIndex("auditor_invitations_token_hash_idx").on(table.tokenHash),
+    index("auditor_invitations_tenant_id_idx").on(table.tenantId),
+    index("auditor_invitations_email_idx").on(table.email),
+    index("auditor_invitations_status_idx").on(table.status),
+    index("auditor_invitations_expires_at_idx").on(table.expiresAt),
+  ],
+);
+
+// ─── Remediation Recommendations ────────────────────────────────
+
+export const remediationRecommendations = pgTable(
+  "remediation_recommendations",
+  {
+    id: text("id").primaryKey(),
+    controlId: text("control_id").notNull(),
+    frameworkId: text("framework_id").notNull(),
+    tenantId: text("tenant_id"),
+    source: text("source").notNull().default("template").$type<RemediationSource>(),
+    summary: text("summary").notNull(),
+    steps: jsonb("steps").notNull().$type<RemediationStep[]>(),
+    estimatedEffort: text("estimated_effort").notNull().default("medium"),
+    status: text("status").notNull().default("pending").$type<RemediationStatus>(),
+    evaluatorContext: jsonb("evaluator_context").default({}).$type<Record<string, unknown>>(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }),
+  },
+  (table) => [
+    index("remediation_control_id_idx").on(table.controlId),
+    index("remediation_framework_id_idx").on(table.frameworkId),
+    index("remediation_tenant_id_idx").on(table.tenantId),
+    index("remediation_status_idx").on(table.status),
+  ],
+);
+
+// ─── Policy Suggestions ──────────────────────────────────────────
+
+export const policySuggestions = pgTable(
+  "policy_suggestions",
+  {
+    id: text("id").primaryKey(),
+    regulatoryUpdateId: text("regulatory_update_id").notNull(),
+    tenantId: text("tenant_id"),
+    policyId: text("policy_id"),
+    policyName: text("policy_name").notNull(),
+    suggestionType: text("suggestion_type").notNull(),
+    description: text("description").notNull(),
+    suggestedChanges: jsonb("suggested_changes").notNull().$type<SuggestedPolicyChange>(),
+    impactLevel: text("impact_level").notNull().default("medium"),
+    status: text("status").notNull().default("pending").$type<PolicySuggestionStatus>(),
+    reviewedBy: text("reviewed_by"),
+    reviewedAt: timestamp("reviewed_at", { withTimezone: true }),
+    appliedPolicyVersion: integer("applied_policy_version"),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+  },
+  (table) => [
+    index("policy_suggestions_update_id_idx").on(table.regulatoryUpdateId),
+    index("policy_suggestions_policy_id_idx").on(table.policyId),
+    index("policy_suggestions_tenant_id_idx").on(table.tenantId),
+    index("policy_suggestions_status_idx").on(table.status),
+  ],
+);
+
+// ─── Auditor Access Logs (append-only) ──────────────────────────
+
+export const auditorAccessLogs = pgTable(
+  "auditor_access_logs",
+  {
+    id: text("id").primaryKey(),
+    invitationId: text("invitation_id")
+      .notNull()
+      .references(() => auditorInvitations.id),
+    tenantId: text("tenant_id")
+      .notNull()
+      .references(() => tenants.id),
+    resource: text("resource").notNull(),
+    action: text("action").notNull(),
+    ipAddress: text("ip_address"),
+    userAgent: text("user_agent"),
+    timestamp: timestamp("timestamp", { withTimezone: true }).defaultNow(),
+  },
+  (table) => [
+    index("auditor_access_logs_invitation_id_idx").on(table.invitationId),
+    index("auditor_access_logs_tenant_id_idx").on(table.tenantId),
+    index("auditor_access_logs_timestamp_idx").on(table.timestamp),
   ],
 );

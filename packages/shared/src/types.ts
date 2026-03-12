@@ -620,6 +620,107 @@ export interface SSOAuditEntry {
   createdAt: string;
 }
 
+// ─── Auditor Portal ─────────────────────────────────────────────
+
+export type AuditorInvitationStatus = "pending" | "active" | "expired" | "revoked";
+
+export interface AuditorInvitation {
+  id: string;
+  tenantId: string;
+  email: string;
+  name: string;
+  status: AuditorInvitationStatus;
+  frameworkScopes: string[];
+  tokenPrefix: string;
+  expiresAt: string;
+  lastAccessedAt: string | null;
+  createdBy: string;
+  createdAt: string;
+  revokedAt: string | null;
+}
+
+export interface CreateAuditorInvitationRequest {
+  email: string;
+  name: string;
+  frameworkScopes: string[];
+  expiresInDays?: number;
+}
+
+export interface AuditorAccessLog {
+  id: string;
+  invitationId: string;
+  tenantId: string;
+  resource: string;
+  action: string;
+  ipAddress: string | null;
+  userAgent: string | null;
+  timestamp: string;
+}
+
+export interface AuditorProfile {
+  id: string;
+  email: string;
+  name: string;
+  tenantName: string;
+  frameworkScopes: string[];
+  expiresAt: string;
+}
+
+// ─── Remediation Recommendations ──────────────────────────────────
+
+export type RemediationSource = "template" | "ai_generated";
+
+export type RemediationStatus = "pending" | "in_progress" | "completed" | "dismissed";
+
+export interface RemediationStep {
+  order: number;
+  title: string;
+  description: string;
+  actionType: "configure" | "create" | "review" | "manual";
+  actionTarget?: string;
+  completed: boolean;
+}
+
+export interface RemediationRecommendation {
+  id: string;
+  controlId: string;
+  frameworkId: string;
+  source: RemediationSource;
+  summary: string;
+  steps: RemediationStep[];
+  estimatedEffort: "low" | "medium" | "high";
+  status: RemediationStatus;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// ─── Policy Suggestions ──────────────────────────────────────────
+
+export type PolicySuggestionStatus = "pending" | "approved" | "rejected" | "applied";
+
+export interface SuggestedPolicyChange {
+  rulesToAdd?: Array<{ name: string; effect: PolicyEffect; priority: number; conditions: PolicyCondition[] }>;
+  rulesToRemove?: string[];
+  conditionUpdates?: Array<{ ruleId: string; conditions: PolicyCondition[] }>;
+  newPolicy?: { name: string; description: string; rules: Array<{ name: string; effect: PolicyEffect; priority: number; conditions: PolicyCondition[] }>; targets: PolicyTarget };
+}
+
+export interface PolicySuggestion {
+  id: string;
+  regulatoryUpdateId: string;
+  policyId: string | null;
+  policyName: string;
+  suggestionType: "modify" | "create" | "review";
+  description: string;
+  suggestedChanges: SuggestedPolicyChange;
+  impactLevel: "low" | "medium" | "high";
+  status: PolicySuggestionStatus;
+  reviewedBy: string | null;
+  reviewedAt: string | null;
+  appliedPolicyVersion: number | null;
+  createdAt: string;
+}
+
 // ─── Error Codes ──────────────────────────────────────────────────
 
 export const ErrorCodes = {
@@ -655,6 +756,15 @@ export const ErrorCodes = {
   PLAN_UPGRADE_REQUIRED: "PLAN_UPGRADE_REQUIRED",
   SESSION_EXPIRED: "SESSION_EXPIRED",
   SESSION_REVOKED: "SESSION_REVOKED",
+  AUDITOR_INVITATION_NOT_FOUND: "AUDITOR_INVITATION_NOT_FOUND",
+  AUDITOR_INVITATION_EXPIRED: "AUDITOR_INVITATION_EXPIRED",
+  AUDITOR_INVITATION_REVOKED: "AUDITOR_INVITATION_REVOKED",
+  AUDITOR_SCOPE_DENIED: "AUDITOR_SCOPE_DENIED",
+  AUDITOR_WRITE_DENIED: "AUDITOR_WRITE_DENIED",
+  RECOMMENDATION_NOT_FOUND: "RECOMMENDATION_NOT_FOUND",
+  SUGGESTION_NOT_FOUND: "SUGGESTION_NOT_FOUND",
+  SUGGESTION_NOT_APPROVED: "SUGGESTION_NOT_APPROVED",
+  SUGGESTION_ALREADY_APPLIED: "SUGGESTION_ALREADY_APPLIED",
 } as const;
 
 export type ErrorCode = (typeof ErrorCodes)[keyof typeof ErrorCodes];
