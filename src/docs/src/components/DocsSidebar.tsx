@@ -26,7 +26,7 @@ export function DocsSidebar({ mobileOpen, onClose }: { mobileOpen: boolean; onCl
       style={{ background: "var(--bg-card)", borderColor: "var(--border)" }}
     >
       {/* Logo */}
-      <div className="flex items-center gap-3 px-5 py-6 border-b" style={{ borderColor: "var(--border)" }}>
+      <a href="/" className="flex items-center gap-3 px-5 py-6 border-b transition-opacity hover:opacity-80" style={{ borderColor: "var(--border)" }}>
         <div
           className="flex items-center justify-center w-9 h-9 rounded-lg"
           style={{ background: "linear-gradient(135deg, var(--blue), var(--teal))" }}
@@ -41,7 +41,7 @@ export function DocsSidebar({ mobileOpen, onClose }: { mobileOpen: boolean; onCl
           </h1>
           <p className="text-xs" style={{ color: "var(--text-muted)" }}>Documentation</p>
         </div>
-      </div>
+      </a>
 
       {/* Navigation */}
       <nav className="flex-1 px-3 py-4">
