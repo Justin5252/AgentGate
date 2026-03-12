@@ -291,6 +291,28 @@ Leverage the audit trail, policy engine, and integrations already built in Agent
   └──────────┘  └──────────┘  └──────────┘
 ```
 
+# Local Development — Apps & Ports
+
+AgentGate is a **monorepo with 4 separate Next.js/Fastify apps**, each running on its own port. They are independent processes — navigating between them means navigating to a different `localhost` port in dev (in production they'd be different subdomains or paths behind a reverse proxy).
+
+| App | Port | Package | Purpose | Start Command |
+|-----|------|---------|---------|---------------|
+| **API** | 3100 | `src/api` | Fastify REST API server, all backend logic | `npm run dev --workspace=@agentgate/api` |
+| **Dashboard** | 3200 | `src/dashboard` | Admin dashboard (agents, policies, compliance, etc.) | `npm run dev --workspace=@agentgate/dashboard` |
+| **Landing** | 3300 | `src/landing` | Marketing / public-facing website | `npm run dev --workspace=@agentgate/landing` |
+| **Docs** | 3400 | `src/docs` | Developer documentation portal | `npm run dev --workspace=@agentgate/docs` |
+
+### Key things to know
+- **Each app is its own Next.js instance.** A `<Link href="/">` inside the docs app goes to the docs homepage, NOT the dashboard. To cross between apps in dev, you navigate to the other port (e.g. `http://localhost:3200`).
+- **The Dashboard talks to the API** via `http://localhost:3100/api/v1/...`. When the API is not running, the dashboard falls back to mock data so the UI still renders.
+- **The Auditor Portal** is a sub-route of the dashboard (`/auditor/*`), not a separate app. Auditors access it via the same port 3200.
+- **In production**, all apps would sit behind a reverse proxy (e.g. Nginx, Cloudflare) with routing like:
+  - `app.agentgate.io` → Dashboard
+  - `api.agentgate.io` → API
+  - `docs.agentgate.io` → Docs
+  - `agentgate.io` → Landing
+- **Database:** PostgreSQL on port 5432 (`postgresql://localhost:5432/agentgate`). Start with `brew services start postgresql@17`.
+
 # Revenue Model
 
 | Tier       | Price         | Includes                                          |
