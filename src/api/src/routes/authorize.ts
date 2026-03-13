@@ -122,6 +122,18 @@ export async function authorizeRoutes(server: FastifyInstance) {
         timestamp: new Date(),
       });
 
+      // Broadcast audit entry to WebSocket clients
+      server.wsManager.broadcast("audit", {
+        id: crypto.randomUUID(),
+        agentId: body.agentId,
+        action: body.action,
+        resource: body.resource,
+        decision: finalDecision.decision,
+        policyId: finalDecision.policyId,
+        durationMs: evalDurationMs,
+        timestamp: new Date().toISOString(),
+      });
+
       // Update agent's last active timestamp (fire-and-forget)
       server.db
         .update(schema.agents)
@@ -144,6 +156,10 @@ export async function authorizeRoutes(server: FastifyInstance) {
           detectedAnomalies = await Promise.all(
             rawAnomalies.map((a) => server.anomalyDetector.saveAnomaly(a)),
           );
+        }
+        // Broadcast anomalies to WebSocket clients
+        for (const anomaly of detectedAnomalies) {
+          server.wsManager.broadcast("anomalies", anomaly);
         }
       } catch (anomalyErr) {
         server.log.error(anomalyErr, "Anomaly detection failed");

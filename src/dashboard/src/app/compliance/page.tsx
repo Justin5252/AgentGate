@@ -9,6 +9,7 @@ import {
   mockRemediations,
   mockPolicySuggestions,
 } from "@/lib/mock-data";
+import { generateFrameworkRemediations } from "@/lib/api";
 import type { RemediationRecommendation, PolicySuggestion } from "@/lib/api";
 
 const statusColors: Record<string, string> = {
@@ -351,9 +352,19 @@ export default function CompliancePage() {
     );
   }
 
-  function handleGenerateRecommendations() {
-    // In production this calls the API; mock just shows existing
-    alert("In production, this generates recommendations for all failing controls via POST /:frameworkId/remediation/generate");
+  async function handleGenerateRecommendations() {
+    try {
+      const result = await generateFrameworkRemediations(selectedFramework);
+      if (result.recommendations?.length) {
+        setRemediations((prev) => {
+          const existingIds = new Set(prev.map((r) => r.id));
+          const newRecs = result.recommendations.filter((r) => !existingIds.has(r.id));
+          return [...newRecs, ...prev];
+        });
+      }
+    } catch {
+      // Fallback: show existing mock remediations
+    }
   }
 
   function getRemediationForControl(controlId: string): RemediationRecommendation | undefined {

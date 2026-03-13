@@ -1,9 +1,11 @@
 "use client";
 
+import { useState } from "react";
 import type { AgentIdentity, AgentStatus, RiskLevel } from "@agentgate/shared";
 
 interface AgentTableProps {
   agents: AgentIdentity[];
+  onDelete?: (id: string) => void;
 }
 
 const statusStyles: Record<AgentStatus, { bg: string; text: string; label: string }> = {
@@ -29,7 +31,9 @@ function formatDate(dateStr: string | null): string {
   });
 }
 
-export function AgentTable({ agents }: AgentTableProps) {
+export function AgentTable({ agents, onDelete }: AgentTableProps) {
+  const [revokeConfirmId, setRevokeConfirmId] = useState<string | null>(null);
+
   if (agents.length === 0) {
     return (
       <div
@@ -87,6 +91,9 @@ export function AgentTable({ agents }: AgentTableProps) {
               <th className="px-5 py-3 font-medium text-xs uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>
                 Created
               </th>
+              <th className="px-5 py-3 font-medium text-xs uppercase tracking-wider text-right" style={{ color: "var(--text-muted)" }}>
+                Actions
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -139,6 +146,42 @@ export function AgentTable({ agents }: AgentTableProps) {
                   </td>
                   <td className="px-5 py-3.5" style={{ color: "var(--text-secondary)" }}>
                     {formatDate(agent.createdAt)}
+                  </td>
+                  <td className="px-5 py-3.5 text-right">
+                    {agent.status !== "revoked" && onDelete && (
+                      <>
+                        {revokeConfirmId === agent.id ? (
+                          <div className="flex items-center gap-2 justify-end">
+                            <span className="text-xs" style={{ color: "var(--warning)" }}>Confirm?</span>
+                            <button
+                              onClick={() => {
+                                onDelete(agent.id);
+                                setRevokeConfirmId(null);
+                              }}
+                              className="px-2 py-1 rounded text-xs font-medium text-white"
+                              style={{ background: "var(--danger)" }}
+                            >
+                              Yes
+                            </button>
+                            <button
+                              onClick={() => setRevokeConfirmId(null)}
+                              className="px-2 py-1 rounded text-xs font-medium border"
+                              style={{ borderColor: "var(--border)", color: "var(--text-secondary)" }}
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        ) : (
+                          <button
+                            onClick={() => setRevokeConfirmId(agent.id)}
+                            className="text-xs font-medium transition-colors"
+                            style={{ color: "var(--danger)" }}
+                          >
+                            Revoke
+                          </button>
+                        )}
+                      </>
+                    )}
                   </td>
                 </tr>
               );

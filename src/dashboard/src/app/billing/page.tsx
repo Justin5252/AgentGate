@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import type { Plan, Subscription, TenantUsage } from "@/lib/api";
-import { fetchPlans, fetchSubscription, fetchTenantUsage } from "@/lib/api";
+import { fetchPlans, fetchSubscription, fetchTenantUsage, createCheckout } from "@/lib/api";
 import { mockPlans, mockSubscription, mockUsage } from "@/lib/mock-data";
 
 function formatNumber(n: number): string {
@@ -136,6 +136,14 @@ export default function BillingPage() {
           </div>
           <div className="flex items-center gap-3">
             <button
+              onClick={async () => {
+                try {
+                  const result = await createCheckout({ tenantId: "tenant-1", plan: subscription?.plan ?? "pro" });
+                  if (result.url) window.open(result.url, "_blank");
+                } catch {
+                  alert("Billing portal is not available in demo mode");
+                }
+              }}
               className="px-4 py-2 rounded-lg text-sm font-medium text-white transition-opacity hover:opacity-90"
               style={{ background: "var(--blue)" }}
             >
@@ -163,6 +171,10 @@ export default function BillingPage() {
             </p>
             <div className="flex gap-3 mt-3">
               <button
+                onClick={() => {
+                  setSubscription((prev) => prev ? { ...prev, cancelAtPeriodEnd: true } : prev);
+                  setShowCancelWarning(false);
+                }}
                 className="px-3 py-1.5 rounded text-xs font-medium text-white"
                 style={{ background: "var(--danger)" }}
               >
@@ -338,6 +350,15 @@ export default function BillingPage() {
                 ) : (
                   <div>
                     <button
+                      onClick={async () => {
+                        try {
+                          const result = await createCheckout({ tenantId: "tenant-1", plan: plan.id });
+                          if (result.url) window.open(result.url, "_blank");
+                        } catch {
+                          // Mock: update subscription locally
+                          setSubscription((prev) => prev ? { ...prev, plan: plan.id } : prev);
+                        }
+                      }}
                       className="w-full py-2.5 rounded-lg text-sm font-medium text-white transition-opacity hover:opacity-90"
                       style={{
                         background: isDowngrade ? "var(--warning)" : "var(--blue)",

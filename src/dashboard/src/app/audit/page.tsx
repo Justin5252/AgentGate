@@ -5,6 +5,8 @@ import type { AuditEntry, PolicyEffect } from "@agentgate/shared";
 import { fetchAuditLogs } from "@/lib/api";
 import { mockAuditEntries } from "@/lib/mock-data";
 import { AuditFeed, AuditFeedSkeleton } from "@/components/AuditFeed";
+import { useWebSocket } from "@/lib/useWebSocket";
+import { LiveIndicator } from "@/components/LiveIndicator";
 
 export default function AuditPage() {
   const [entries, setEntries] = useState<AuditEntry[]>([]);
@@ -12,6 +14,7 @@ export default function AuditPage() {
   const [agentFilter, setAgentFilter] = useState("");
   const [actionFilter, setActionFilter] = useState("");
   const [decisionFilter, setDecisionFilter] = useState<PolicyEffect | "">("");
+  const { connected, lastMessage } = useWebSocket("audit");
 
   useEffect(() => {
     fetchAuditLogs({ limit: 50 })
@@ -35,16 +38,27 @@ export default function AuditPage() {
     });
   }, [entries, agentFilter, actionFilter, decisionFilter]);
 
+  // Listen for real-time audit entries
+  useEffect(() => {
+    if (lastMessage?.channel === "audit" && lastMessage.data) {
+      const entry = lastMessage.data as AuditEntry;
+      setEntries((prev) => [entry, ...prev]);
+    }
+  }, [lastMessage]);
+
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold" style={{ color: "var(--text-primary)" }}>
-          Audit Log
-        </h1>
-        <p className="text-sm mt-1" style={{ color: "var(--text-secondary)" }}>
-          Complete record of all authorization decisions
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold" style={{ color: "var(--text-primary)" }}>
+            Audit Log
+          </h1>
+          <p className="text-sm mt-1" style={{ color: "var(--text-secondary)" }}>
+            Complete record of all authorization decisions
+          </p>
+        </div>
+        <LiveIndicator connected={connected} />
       </div>
 
       {/* Filters */}

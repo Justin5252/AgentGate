@@ -1,9 +1,11 @@
 "use client";
 
+import { useState } from "react";
 import type { Policy } from "@agentgate/shared";
 
 interface PolicyTableProps {
   policies: Policy[];
+  onDelete?: (id: string) => void;
 }
 
 function formatDate(dateStr: string): string {
@@ -32,7 +34,9 @@ function summarizeTargets(policy: Policy): string {
   return parts.length > 0 ? parts.join(", ") : "All";
 }
 
-export function PolicyTable({ policies }: PolicyTableProps) {
+export function PolicyTable({ policies, onDelete }: PolicyTableProps) {
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+
   if (policies.length === 0) {
     return (
       <div
@@ -89,6 +93,9 @@ export function PolicyTable({ policies }: PolicyTableProps) {
               </th>
               <th className="px-5 py-3 font-medium text-xs uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>
                 Updated
+              </th>
+              <th className="px-5 py-3 font-medium text-xs uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>
+                Actions
               </th>
             </tr>
           </thead>
@@ -152,6 +159,55 @@ export function PolicyTable({ policies }: PolicyTableProps) {
                 </td>
                 <td className="px-5 py-3.5" style={{ color: "var(--text-secondary)" }}>
                   {formatDate(policy.updatedAt)}
+                </td>
+                <td className="px-5 py-3.5">
+                  {deleteConfirmId === policy.id ? (
+                    <span className="flex items-center gap-2">
+                      <button
+                        className="px-2.5 py-1 rounded-md text-xs font-medium transition-all duration-150"
+                        style={{
+                          background: "rgba(239, 68, 68, 0.15)",
+                          color: "var(--danger)",
+                          border: "1px solid rgba(239, 68, 68, 0.3)",
+                        }}
+                        onClick={() => {
+                          onDelete?.(policy.id);
+                          setDeleteConfirmId(null);
+                        }}
+                      >
+                        Confirm?
+                      </button>
+                      <button
+                        className="px-2.5 py-1 rounded-md text-xs font-medium transition-all duration-150"
+                        style={{
+                          color: "var(--text-muted)",
+                        }}
+                        onClick={() => setDeleteConfirmId(null)}
+                      >
+                        Cancel
+                      </button>
+                    </span>
+                  ) : (
+                    <button
+                      className="px-2.5 py-1 rounded-md text-xs font-medium transition-all duration-150"
+                      style={{
+                        background: "rgba(239, 68, 68, 0.1)",
+                        color: "var(--danger)",
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.background = "rgba(239, 68, 68, 0.2)";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = "rgba(239, 68, 68, 0.1)";
+                      }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setDeleteConfirmId(policy.id);
+                      }}
+                    >
+                      Delete
+                    </button>
+                  )}
                 </td>
               </tr>
             ))}

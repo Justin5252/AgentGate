@@ -5,6 +5,7 @@
   "description": "The universal identity and access control layer for AI agents",
   "workspaces": [
     "src/api",
+    "src/cli",
     "src/dashboard",
     "src/landing",
     "src/docs",

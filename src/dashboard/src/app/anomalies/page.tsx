@@ -2,10 +2,14 @@
 
 import { useEffect, useState, useMemo } from "react";
 import type { Anomaly, AnomalyStats } from "@/lib/api";
-import { fetchAnomalies, fetchAnomalyStats } from "@/lib/api";
+import { fetchAnomalies, fetchAnomalyStats, resolveAnomaly } from "@/lib/api";
+import type { Anomaly as AnomalyType } from "@/lib/api";
 import { mockAnomalies, mockAnomalyStats } from "@/lib/mock-data";
 import { StatCard, StatCardSkeleton } from "@/components/StatCard";
 import { AnomalyList, AnomalyListSkeleton } from "@/components/AnomalyList";
+import { useWebSocket } from "@/lib/useWebSocket";
+import { LiveIndicator } from "@/components/LiveIndicator";
+import { useToast } from "@/components/Toast";
 
 const severityOptions = ["all", "critical", "high", "medium", "low"];
 const typeOptions = [
@@ -35,6 +39,8 @@ export default function AnomaliesPage() {
   const [severity, setSeverity] = useState("all");
   const [type, setType] = useState("all");
   const [showResolved, setShowResolved] = useState(false);
+  const { connected, lastMessage } = useWebSocket("anomalies");
+  const { addToast } = useToast();
 
   useEffect(() => {
     async function loadData() {
@@ -64,11 +70,29 @@ export default function AnomaliesPage() {
     });
   }, [anomalies, severity, type, showResolved]);
 
-  const handleResolve = (id: string) => {
+  const handleResolve = async (id: string) => {
+    try {
+      await resolveAnomaly(id);
+    } catch {
+      // Fall through to local state update
+    }
     setAnomalies((prev) =>
       prev.map((a) => (a.id === id ? { ...a, resolved: true } : a))
     );
   };
+
+  // Listen for real-time anomalies
+  useEffect(() => {
+    if (lastMessage?.channel === "anomalies" && lastMessage.data) {
+      const anomaly = lastMessage.data as AnomalyType;
+      setAnomalies((prev) => [anomaly, ...prev]);
+      if (anomaly.severity === "critical") {
+        addToast(`Critical anomaly: ${anomaly.description}`, "error");
+      } else if (anomaly.severity === "high") {
+        addToast(`High severity anomaly: ${anomaly.description}`, "warning");
+      }
+    }
+  }, [lastMessage, addToast]);
 
   const criticalCount = stats?.bySeverity?.critical ?? 0;
   const highCount = stats?.bySeverity?.high ?? 0;
@@ -76,13 +100,16 @@ export default function AnomaliesPage() {
   return (
     <div className="space-y-8">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold" style={{ color: "var(--text-primary)" }}>
-          Anomaly Detection
-        </h1>
-        <p className="text-sm mt-1" style={{ color: "var(--text-secondary)" }}>
-          Monitor unusual agent behavior and potential threats
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold" style={{ color: "var(--text-primary)" }}>
+            Anomaly Detection
+          </h1>
+          <p className="text-sm mt-1" style={{ color: "var(--text-secondary)" }}>
+            Monitor unusual agent behavior and potential threats
+          </p>
+        </div>
+        <LiveIndicator connected={connected} />
       </div>
 
       {/* Stat Cards */}

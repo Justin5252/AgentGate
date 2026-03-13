@@ -3,6 +3,7 @@ import cors from "@fastify/cors";
 import rateLimit from "@fastify/rate-limit";
 import cookie from "@fastify/cookie";
 import formbody from "@fastify/formbody";
+import websocket from "@fastify/websocket";
 import { createDb } from "./db/index.js";
 import { PolicyEvaluator } from "@agentgate/engine";
 import { agentRoutes } from "./routes/agents.js";
@@ -29,6 +30,9 @@ import { AuditorService } from "./services/auditor.js";
 import { RemediationService } from "./services/remediation.js";
 import { PolicySuggestionService } from "./services/policy-suggestions.js";
 import { auditorRoutes } from "./routes/auditor.js";
+import { policyTemplateRoutes } from "./routes/policy-templates.js";
+import { wsRoutes } from "./routes/ws.js";
+import { WebSocketManager } from "./services/ws-manager.js";
 import type { Database } from "./db/index.js";
 
 declare module "fastify" {
@@ -43,6 +47,7 @@ declare module "fastify" {
     policySuggestionService: PolicySuggestionService;
     ssoService: SSOService;
     auditorService: AuditorService;
+    wsManager: WebSocketManager;
   }
 }
 
@@ -79,6 +84,7 @@ export async function buildServer(options: BuildServerOptions) {
     secret: process.env.COOKIE_SECRET ?? "dev-cookie-secret",
   });
   await server.register(formbody);
+  await server.register(websocket);
 
   // Database & engine
   const { db } = createDb(options.databaseUrl);
@@ -103,6 +109,9 @@ export async function buildServer(options: BuildServerOptions) {
   server.decorate("policySuggestionService", policySuggestionService);
   server.decorate("ssoService", ssoService);
   server.decorate("auditorService", auditorService);
+
+  const wsManager = new WebSocketManager();
+  server.decorate("wsManager", wsManager);
 
   // Register auth middleware (must come before routes)
   await server.register(authMiddleware);
@@ -174,6 +183,14 @@ export async function buildServer(options: BuildServerOptions) {
       <div class="endpoint">
         <span class="endpoint-name"><span class="method">GET</span> Audit Log</span>
         <span class="endpoint-path"><a href="/api/v1/audit">/api/v1/audit</a></span>
+      </div>
+    </div>
+
+    <div class="section-title">Templates</div>
+    <div class="endpoints">
+      <div class="endpoint">
+        <span class="endpoint-name"><span class="method">GET</span> Policy Templates</span>
+        <span class="endpoint-path"><a href="/api/v1/policy-templates">/api/v1/policy-templates</a></span>
       </div>
     </div>
 
@@ -276,6 +293,7 @@ export async function buildServer(options: BuildServerOptions) {
         auth: "/api/v1/auth",
         scim: "/api/v1/scim/:tenantSlug",
         auditor: "/api/v1/auditor",
+        policyTemplates: "/api/v1/policy-templates",
       },
     };
   });
@@ -296,6 +314,8 @@ export async function buildServer(options: BuildServerOptions) {
   await server.register(authRoutes, { prefix: "/api/v1/auth" });
   await server.register(scimRoutes, { prefix: "/api/v1/scim/:tenantSlug" });
   await server.register(auditorRoutes, { prefix: "/api/v1/auditor" });
+  await server.register(policyTemplateRoutes, { prefix: "/api/v1/policy-templates" });
+  await server.register(wsRoutes);
 
   return server;
 }

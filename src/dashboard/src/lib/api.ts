@@ -74,6 +74,12 @@ export async function createAgent(
   });
 }
 
+export async function deleteAgent(id: string): Promise<void> {
+  return request<void>(`/api/v1/agents/${id}`, {
+    method: "DELETE",
+  });
+}
+
 // ─── Policies ──────────────────────────────────────────────────────
 
 export async function fetchPolicies(
@@ -88,6 +94,12 @@ export async function createPolicy(
   return request<Policy>("/api/v1/policies", {
     method: "POST",
     body: JSON.stringify(data),
+  });
+}
+
+export async function deletePolicy(id: string): Promise<void> {
+  return request<void>(`/api/v1/policies/${id}`, {
+    method: "DELETE",
   });
 }
 
@@ -154,6 +166,12 @@ export async function fetchAnomalies(
 
 export async function fetchAnomalyStats(): Promise<AnomalyStats> {
   return request<AnomalyStats>("/api/v1/anomalies/stats");
+}
+
+export async function resolveAnomaly(id: string): Promise<Anomaly> {
+  return request<Anomaly>(`/api/v1/anomalies/${id}/resolve`, {
+    method: "PATCH",
+  });
 }
 
 // ─── A2A ────────────────────────────────────────────────────────────
@@ -686,4 +704,35 @@ export async function fetchAuditorAuditLogs(
   params?: { limit?: number; offset?: number },
 ): Promise<any[]> {
   return auditorRequest<any[]>(`/api/v1/auditor/portal/audit-logs${toQueryString(params as Record<string, unknown>)}`, token);
+}
+
+// ─── Policy Templates ─────────────────────────────────────────────
+
+export interface PolicyTemplate {
+  id: string;
+  name: string;
+  description: string;
+  category: string;
+  template: {
+    name: string;
+    description: string;
+    rules: Array<{
+      name: string;
+      effect: "allow" | "deny" | "escalate";
+      priority: number;
+      conditions: Array<{ field: string; operator: string; value: unknown }>;
+    }>;
+    targets: {
+      actions?: string[];
+      resources?: string[];
+      agentIds?: string[];
+      agentTags?: string[];
+    };
+    enabled: boolean;
+  };
+}
+
+export async function fetchPolicyTemplates(category?: string): Promise<PolicyTemplate[]> {
+  const qs = category ? `?category=${category}` : "";
+  return request<PolicyTemplate[]>(`/api/v1/policy-templates${qs}`);
 }
