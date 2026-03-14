@@ -29,6 +29,13 @@ import type {
   RemediationStep,
   PolicySuggestionStatus,
   SuggestedPolicyChange,
+  IntegrationType,
+  QuestionnaireQuestion,
+  QuestionnaireAnswer,
+  QuestionnaireStatus,
+  VendorAssessmentStatus,
+  VendorRecommendation,
+  AssessmentFinding,
 } from "@agentgate/shared";
 
 // ─── Tenants ─────────────────────────────────────────────────────────
@@ -664,5 +671,130 @@ export const auditorAccessLogs = pgTable(
     index("auditor_access_logs_invitation_id_idx").on(table.invitationId),
     index("auditor_access_logs_tenant_id_idx").on(table.tenantId),
     index("auditor_access_logs_timestamp_idx").on(table.timestamp),
+  ],
+);
+
+// ─── Trust Center Configs ──────────────────────────────────────
+
+export const trustCenterConfigs = pgTable(
+  "trust_center_configs",
+  {
+    id: text("id").primaryKey(),
+    tenantId: text("tenant_id")
+      .notNull()
+      .references(() => tenants.id)
+      .unique(),
+    enabled: boolean("enabled").notNull().default(false),
+    publicSlug: text("public_slug").notNull().unique(),
+    customTitle: text("custom_title"),
+    customDescription: text("custom_description"),
+    showFrameworks: jsonb("show_frameworks").default([]).$type<string[]>(),
+    showComplianceScores: boolean("show_compliance_scores").notNull().default(true),
+    showLastAuditDate: boolean("show_last_audit_date").notNull().default(true),
+    showControlSummary: boolean("show_control_summary").notNull().default(true),
+    showBadges: boolean("show_badges").notNull().default(true),
+    customLogo: text("custom_logo"),
+    customAccentColor: text("custom_accent_color"),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
+  },
+  (table) => [
+    index("trust_center_configs_tenant_id_idx").on(table.tenantId),
+  ],
+);
+
+// ─── Questionnaire Responses ──────────────────────────────────
+
+export const questionnaireResponses = pgTable(
+  "questionnaire_responses",
+  {
+    id: text("id").primaryKey(),
+    tenantId: text("tenant_id").notNull(),
+    questionnaireTitle: text("questionnaire_title").notNull(),
+    questions: jsonb("questions").notNull().$type<QuestionnaireQuestion[]>(),
+    responses: jsonb("responses").notNull().$type<QuestionnaireAnswer[]>(),
+    status: text("status").notNull().default("draft").$type<QuestionnaireStatus>(),
+    generatedAt: timestamp("generated_at", { withTimezone: true }).defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
+  },
+  (table) => [
+    index("questionnaire_responses_tenant_id_idx").on(table.tenantId),
+    index("questionnaire_responses_status_idx").on(table.status),
+  ],
+);
+
+// ─── Integration Configs ──────────────────────────────────────
+
+export const integrationConfigs = pgTable(
+  "integration_configs",
+  {
+    id: text("id").primaryKey(),
+    tenantId: text("tenant_id").notNull(),
+    integrationType: text("integration_type").notNull().$type<IntegrationType>(),
+    configEncrypted: text("config_encrypted").notNull(),
+    enabled: boolean("enabled").notNull().default(false),
+    lastSyncAt: timestamp("last_sync_at", { withTimezone: true }),
+    lastSyncStatus: text("last_sync_status"),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
+  },
+  (table) => [
+    index("integration_configs_tenant_id_idx").on(table.tenantId),
+    uniqueIndex("integration_configs_tenant_type_idx").on(table.tenantId, table.integrationType),
+  ],
+);
+
+// ─── Vendor Agents ──────────────────────────────────────────────
+
+export const vendorAgents = pgTable(
+  "vendor_agents",
+  {
+    id: text("id").primaryKey(),
+    tenantId: text("tenant_id").notNull(),
+    vendorName: text("vendor_name").notNull(),
+    agentName: text("agent_name").notNull(),
+    description: text("description").notNull(),
+    vendorUrl: text("vendor_url"),
+    contactEmail: text("contact_email"),
+    capabilities: jsonb("capabilities").default([]).$type<string[]>(),
+    dataAccess: jsonb("data_access").default([]).$type<string[]>(),
+    riskScore: integer("risk_score").notNull().default(50),
+    riskLevel: text("risk_level").notNull().default("medium").$type<import("@agentgate/shared").RiskLevel>(),
+    assessmentStatus: text("assessment_status").notNull().default("not_assessed").$type<VendorAssessmentStatus>(),
+    complianceClaims: jsonb("compliance_claims").default({}).$type<Record<string, boolean>>(),
+    lastAssessedAt: timestamp("last_assessed_at", { withTimezone: true }),
+    nextReviewDate: timestamp("next_review_date", { withTimezone: true }),
+    notes: text("notes"),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
+  },
+  (table) => [
+    index("vendor_agents_tenant_id_idx").on(table.tenantId),
+    index("vendor_agents_risk_level_idx").on(table.riskLevel),
+    index("vendor_agents_assessment_status_idx").on(table.assessmentStatus),
+  ],
+);
+
+// ─── Vendor Agent Assessments ──────────────────────────────────
+
+export const vendorAgentAssessments = pgTable(
+  "vendor_agent_assessments",
+  {
+    id: text("id").primaryKey(),
+    vendorAgentId: text("vendor_agent_id")
+      .notNull()
+      .references(() => vendorAgents.id),
+    tenantId: text("tenant_id").notNull(),
+    assessorId: text("assessor_id").notNull(),
+    assessmentType: text("assessment_type").notNull().default("initial"),
+    findings: jsonb("findings").notNull().$type<AssessmentFinding[]>(),
+    overallRiskScore: integer("overall_risk_score").notNull(),
+    recommendation: text("recommendation").notNull().$type<VendorRecommendation>(),
+    notes: text("notes"),
+    assessedAt: timestamp("assessed_at", { withTimezone: true }).defaultNow(),
+  },
+  (table) => [
+    index("vendor_agent_assessments_vendor_agent_id_idx").on(table.vendorAgentId),
+    index("vendor_agent_assessments_tenant_id_idx").on(table.tenantId),
   ],
 );

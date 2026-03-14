@@ -736,3 +736,227 @@ export async function fetchPolicyTemplates(category?: string): Promise<PolicyTem
   const qs = category ? `?category=${category}` : "";
   return request<PolicyTemplate[]>(`/api/v1/policy-templates${qs}`);
 }
+
+// ─── Trust Center ───────────────────────────────────────────────
+
+export interface TrustCenterConfig {
+  id: string;
+  tenantId: string;
+  enabled: boolean;
+  publicSlug: string;
+  customTitle: string | null;
+  customDescription: string | null;
+  showFrameworks: string[];
+  showComplianceScores: boolean;
+  showLastAuditDate: boolean;
+  showControlSummary: boolean;
+  showBadges: boolean;
+  customLogo: string | null;
+  customAccentColor: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export async function fetchTrustCenterConfig(): Promise<TrustCenterConfig> {
+  return request<TrustCenterConfig>("/api/v1/trust-center/config");
+}
+
+export async function updateTrustCenterConfig(data: Partial<TrustCenterConfig>): Promise<TrustCenterConfig> {
+  return request<TrustCenterConfig>("/api/v1/trust-center/config", {
+    method: "PUT",
+    body: JSON.stringify(data),
+  });
+}
+
+export async function enableTrustCenter(): Promise<TrustCenterConfig> {
+  return request<TrustCenterConfig>("/api/v1/trust-center/config/enable", { method: "POST" });
+}
+
+export async function disableTrustCenter(): Promise<TrustCenterConfig> {
+  return request<TrustCenterConfig>("/api/v1/trust-center/config/disable", { method: "POST" });
+}
+
+// ─── Questionnaire Automation ───────────────────────────────────
+
+export interface QuestionnaireQuestion {
+  id: string;
+  question: string;
+  category?: string;
+}
+
+export interface QuestionnaireAnswer {
+  questionId: string;
+  question: string;
+  answer: string;
+  confidence: "high" | "medium" | "low";
+  supportingEvidence: string[];
+  controlReferences: string[];
+}
+
+export interface QuestionnaireResponse {
+  id: string;
+  tenantId: string;
+  questionnaireTitle: string;
+  questions: QuestionnaireQuestion[];
+  responses: QuestionnaireAnswer[];
+  status: "draft" | "completed" | "exported";
+  generatedAt: string;
+  updatedAt: string;
+}
+
+export async function generateQuestionnaire(data: {
+  title: string;
+  questions: QuestionnaireQuestion[];
+}): Promise<QuestionnaireResponse> {
+  return request<QuestionnaireResponse>("/api/v1/questionnaire/generate", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+export async function fetchQuestionnaires(): Promise<QuestionnaireResponse[]> {
+  return request<QuestionnaireResponse[]>("/api/v1/questionnaire");
+}
+
+export async function fetchQuestionnaire(id: string): Promise<QuestionnaireResponse> {
+  return request<QuestionnaireResponse>(`/api/v1/questionnaire/${id}`);
+}
+
+export async function exportQuestionnaire(id: string): Promise<QuestionnaireResponse> {
+  return request<QuestionnaireResponse>(`/api/v1/questionnaire/${id}/export`, { method: "POST" });
+}
+
+// ─── Integrations ───────────────────────────────────────────────
+
+export interface IntegrationConfig {
+  id: string;
+  tenantId: string;
+  integrationType: string;
+  enabled: boolean;
+  lastSyncAt: string | null;
+  lastSyncStatus: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface IntegrationSyncResult {
+  pushed: number;
+  pulled: number;
+  errors: string[];
+  syncedAt: string;
+}
+
+export async function fetchIntegrations(): Promise<IntegrationConfig[]> {
+  return request<IntegrationConfig[]>("/api/v1/integrations");
+}
+
+export async function configureVanta(data: { apiKey: string; baseUrl?: string }): Promise<{ id: string; configured: boolean }> {
+  return request("/api/v1/integrations/vanta/configure", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+export async function pushToVanta(): Promise<IntegrationSyncResult> {
+  return request<IntegrationSyncResult>("/api/v1/integrations/vanta/push", { method: "POST" });
+}
+
+export async function syncFromVanta(): Promise<IntegrationSyncResult> {
+  return request<IntegrationSyncResult>("/api/v1/integrations/vanta/sync", { method: "POST" });
+}
+
+export async function fetchIntegrationStatus(type: string): Promise<{
+  id: string;
+  integrationType: string;
+  enabled: boolean;
+  lastSyncAt: string | null;
+  lastSyncStatus: string | null;
+}> {
+  return request(`/api/v1/integrations/${type}/status`);
+}
+
+// ─── Vendor Agents ──────────────────────────────────────────────
+
+export interface VendorAgent {
+  id: string;
+  tenantId: string;
+  vendorName: string;
+  agentName: string;
+  description: string;
+  vendorUrl: string | null;
+  contactEmail: string | null;
+  capabilities: string[];
+  dataAccess: string[];
+  riskScore: number;
+  riskLevel: "low" | "medium" | "high" | "critical";
+  assessmentStatus: "not_assessed" | "in_progress" | "assessed" | "needs_review";
+  complianceClaims: Record<string, boolean>;
+  lastAssessedAt: string | null;
+  nextReviewDate: string | null;
+  notes: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface VendorAgentAssessment {
+  id: string;
+  vendorAgentId: string;
+  tenantId: string;
+  assessorId: string;
+  assessmentType: string;
+  findings: Array<{ category: string; finding: string; severity: string; status: string }>;
+  overallRiskScore: number;
+  recommendation: string;
+  notes: string | null;
+  assessedAt: string;
+}
+
+export interface VendorAgentStats {
+  total: number;
+  byRiskLevel: Record<string, number>;
+  byAssessmentStatus: Record<string, number>;
+  avgRiskScore: number;
+  needsReview: number;
+}
+
+export async function fetchVendorAgents(): Promise<VendorAgent[]> {
+  return request<VendorAgent[]>("/api/v1/vendor-agents");
+}
+
+export async function fetchVendorAgentStats(): Promise<VendorAgentStats> {
+  return request<VendorAgentStats>("/api/v1/vendor-agents/stats");
+}
+
+export async function createVendorAgent(data: {
+  vendorName: string;
+  agentName: string;
+  description: string;
+  vendorUrl?: string;
+  contactEmail?: string;
+  capabilities?: string[];
+  dataAccess?: string[];
+  complianceClaims?: Record<string, boolean>;
+}): Promise<VendorAgent> {
+  return request<VendorAgent>("/api/v1/vendor-agents", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+export async function deleteVendorAgent(id: string): Promise<void> {
+  return request<void>(`/api/v1/vendor-agents/${id}`, { method: "DELETE" });
+}
+
+export async function assessVendorAgent(id: string, data?: {
+  assessmentType?: string;
+  notes?: string;
+}): Promise<VendorAgentAssessment> {
+  return request<VendorAgentAssessment>(`/api/v1/vendor-agents/${id}/assess`, {
+    method: "POST",
+    body: JSON.stringify(data ?? {}),
+  });
+}
+
+export async function fetchVendorAgentAssessments(id: string): Promise<VendorAgentAssessment[]> {
+  return request<VendorAgentAssessment[]>(`/api/v1/vendor-agents/${id}/assessments`);
+}

@@ -129,6 +129,82 @@ export const FRAMEWORK_DEFS: Record<string, FrameworkDef> = {
       { controlCode: "Art.15", title: "Accuracy & Robustness", description: "AI agents meet accuracy and cybersecurity standards", category: "Technical", severity: "high", automatable: false, evaluator: "manual_review" },
     ],
   },
+  hitrust_csf: {
+    id: "hitrust_csf",
+    name: "HITRUST CSF",
+    version: "11.3",
+    description:
+      "HITRUST Common Security Framework — comprehensive, certifiable security framework for AI agent operations",
+    controls: [
+      { controlCode: "01.a", title: "Access Control Management", description: "Policies governing AI agent access to protected information", category: "Access Control", severity: "high", automatable: true, evaluator: "has_policies" },
+      { controlCode: "01.d", title: "Identity & Access Management", description: "Unique identities for all AI agents with lifecycle management", category: "Access Control", severity: "critical", automatable: true, evaluator: "has_agents" },
+      { controlCode: "06.c", title: "Audit Logging & Monitoring", description: "Continuous monitoring and logging of AI agent activities", category: "Audit Logging", severity: "critical", automatable: true, evaluator: "has_audit_logs" },
+      { controlCode: "06.e", title: "AI System Risk Assessment", description: "Risk-based monitoring and anomaly detection for agent behavior", category: "Risk Management", severity: "high", automatable: true, evaluator: "has_anomaly_detection" },
+      { controlCode: "09.m", title: "Network Protection", description: "Agent-to-agent communication boundaries and controls", category: "Network Security", severity: "high", automatable: true, evaluator: "has_a2a_channels" },
+      { controlCode: "10.g", title: "Encryption Management", description: "Cryptographic controls for data protection in agent workflows", category: "Cryptography", severity: "critical", automatable: true, evaluator: "always_passing" },
+      { controlCode: "11.a", title: "Incident Management", description: "Procedures for responding to agent security incidents", category: "Incident Management", severity: "high", automatable: false, evaluator: "manual_review" },
+    ],
+  },
+  cmmc_2: {
+    id: "cmmc_2",
+    name: "CMMC 2.0",
+    version: "2.0",
+    description:
+      "Cybersecurity Maturity Model Certification — DoD requirements for AI agents handling controlled information",
+    controls: [
+      { controlCode: "AC.L2-3.1.1", title: "Access Control", description: "Limit system access to authorized AI agents only", category: "Access Control", severity: "high", automatable: true, evaluator: "has_policies" },
+      { controlCode: "AU.L2-3.3.1", title: "Audit & Accountability", description: "Create and retain audit records of AI agent actions", category: "Audit", severity: "critical", automatable: true, evaluator: "has_audit_logs" },
+      { controlCode: "IA.L2-3.5.1", title: "Identification & Authentication", description: "Identify and authenticate all AI agents before access", category: "Authentication", severity: "critical", automatable: true, evaluator: "has_agents" },
+      { controlCode: "IA.L2-3.5.2", title: "Agent Authentication", description: "Authenticate AI agents with cryptographic credentials", category: "Authentication", severity: "critical", automatable: true, evaluator: "has_api_keys" },
+      { controlCode: "IR.L2-3.6.1", title: "Incident Response", description: "Detect, report, and respond to agent anomalies", category: "Incident Response", severity: "high", automatable: true, evaluator: "has_anomaly_detection" },
+      { controlCode: "SC.L2-3.13.1", title: "System & Communications Protection", description: "Monitor and control agent communications at boundaries", category: "Communications", severity: "high", automatable: true, evaluator: "has_a2a_channels" },
+      { controlCode: "RA.L2-3.11.1", title: "Risk Assessment", description: "Periodic risk assessment of AI agent operations", category: "Risk Assessment", severity: "high", automatable: false, evaluator: "manual_review" },
+    ],
+  },
+  nis2: {
+    id: "nis2",
+    name: "NIS2 Directive",
+    version: "2024",
+    description:
+      "EU Network and Information Security Directive 2 — cybersecurity requirements for AI agent operators",
+    controls: [
+      { controlCode: "Art.21.1", title: "Risk Management Measures", description: "Risk-based approach to AI agent security with anomaly detection", category: "Risk Management", severity: "critical", automatable: true, evaluator: "has_anomaly_detection" },
+      { controlCode: "Art.21.2", title: "Incident Handling", description: "Comprehensive logging for incident detection and response", category: "Incident Management", severity: "critical", automatable: true, evaluator: "has_audit_logs" },
+      { controlCode: "Art.21.3", title: "Supply Chain Security", description: "Security controls for agent-to-agent supply chain interactions", category: "Supply Chain", severity: "high", automatable: true, evaluator: "has_a2a_channels" },
+      { controlCode: "Art.21.4", title: "Encryption & Access Control", description: "Access policies and encryption for agent data handling", category: "Access Control", severity: "high", automatable: true, evaluator: "has_policies" },
+      { controlCode: "Art.21.5", title: "Cybersecurity Testing", description: "Verification of agent identity management and security controls", category: "Testing", severity: "medium", automatable: true, evaluator: "has_agents" },
+      { controlCode: "Art.23", title: "Business Continuity", description: "Continuity planning for AI agent operations", category: "Continuity", severity: "high", automatable: false, evaluator: "manual_review" },
+    ],
+  },
+  dora: {
+    id: "dora",
+    name: "DORA",
+    version: "2025",
+    description:
+      "Digital Operational Resilience Act — EU financial sector resilience requirements for AI agent systems",
+    controls: [
+      { controlCode: "Art.5", title: "ICT Risk Management", description: "Comprehensive risk management for AI agent operations", category: "Risk Management", severity: "critical", automatable: true, evaluator: "has_anomaly_detection" },
+      { controlCode: "Art.10", title: "ICT Incident Reporting", description: "Classification and reporting of agent-related ICT incidents", category: "Incident Management", severity: "critical", automatable: true, evaluator: "has_audit_logs" },
+      { controlCode: "Art.24", title: "Resilience Testing", description: "Testing digital operational resilience of agent systems", category: "Testing", severity: "high", automatable: false, evaluator: "manual_review" },
+      { controlCode: "Art.28", title: "Third-Party Risk Management", description: "Managing risks from third-party agent integrations", category: "Third Party", severity: "high", automatable: true, evaluator: "has_a2a_channels" },
+      { controlCode: "Art.14", title: "Information Sharing", description: "Policies for secure information exchange between agents", category: "Information Sharing", severity: "medium", automatable: true, evaluator: "has_policies" },
+      { controlCode: "Art.8", title: "ICT Asset Management", description: "Inventory and management of all AI agent identities", category: "Asset Management", severity: "high", automatable: true, evaluator: "has_agents" },
+    ],
+  },
+  cyber_essentials: {
+    id: "cyber_essentials",
+    name: "Cyber Essentials",
+    version: "2024",
+    description:
+      "UK Cyber Essentials — baseline security controls for AI agent infrastructure",
+    controls: [
+      { controlCode: "CE.1", title: "Firewalls", description: "Agent communication boundary controls and channel restrictions", category: "Boundary Security", severity: "high", automatable: true, evaluator: "has_a2a_channels" },
+      { controlCode: "CE.2", title: "Secure Configuration", description: "Secure default configurations for AI agent policies", category: "Configuration", severity: "high", automatable: true, evaluator: "has_policies" },
+      { controlCode: "CE.3", title: "Access Control", description: "Unique agent identities with authenticated access", category: "Access Control", severity: "critical", automatable: true, evaluator: "has_agents" },
+      { controlCode: "CE.4", title: "Malware Protection", description: "Anomaly detection to identify compromised agent behavior", category: "Malware Protection", severity: "high", automatable: true, evaluator: "has_anomaly_detection" },
+      { controlCode: "CE.5", title: "Patch Management", description: "Regular review and update of agent security configurations", category: "Maintenance", severity: "medium", automatable: false, evaluator: "manual_review" },
+    ],
+  },
 };
 
 // ─── Compliance Service ──────────────────────────────────────────

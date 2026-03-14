@@ -370,7 +370,7 @@ export interface BillingPortalRequest {
 
 // ─── Compliance Autopilot ────────────────────────────────────────
 
-export type ComplianceFrameworkId = "soc2" | "iso27001" | "hipaa" | "gdpr" | "pci_dss" | "eu_ai_act";
+export type ComplianceFrameworkId = "soc2" | "iso27001" | "hipaa" | "gdpr" | "pci_dss" | "eu_ai_act" | "hitrust_csf" | "cmmc_2" | "nis2" | "dora" | "cyber_essentials";
 
 export type ControlStatus = "passing" | "failing" | "warning" | "not_evaluated" | "not_applicable";
 
@@ -721,6 +721,210 @@ export interface PolicySuggestion {
   createdAt: string;
 }
 
+// ─── Trust Center ────────────────────────────────────────────────
+
+export interface TrustCenterConfig {
+  id: string;
+  tenantId: string;
+  enabled: boolean;
+  publicSlug: string;
+  customTitle: string | null;
+  customDescription: string | null;
+  showFrameworks: string[];
+  showComplianceScores: boolean;
+  showLastAuditDate: boolean;
+  showControlSummary: boolean;
+  showBadges: boolean;
+  customLogo: string | null;
+  customAccentColor: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface UpdateTrustCenterConfigRequest {
+  enabled?: boolean;
+  publicSlug?: string;
+  customTitle?: string;
+  customDescription?: string;
+  showFrameworks?: string[];
+  showComplianceScores?: boolean;
+  showLastAuditDate?: boolean;
+  showControlSummary?: boolean;
+  showBadges?: boolean;
+  customLogo?: string;
+  customAccentColor?: string;
+}
+
+export interface TrustCenterFrameworkSummary {
+  frameworkId: string;
+  name: string;
+  version: string;
+  complianceScore: number;
+  totalControls: number;
+  passingControls: number;
+  lastEvaluatedAt: string | null;
+}
+
+export interface TrustCenterPublicData {
+  tenantName: string;
+  title: string;
+  description: string;
+  frameworks: TrustCenterFrameworkSummary[];
+  showComplianceScores: boolean;
+  showLastAuditDate: boolean;
+  showControlSummary: boolean;
+  showBadges: boolean;
+  customLogo: string | null;
+  customAccentColor: string | null;
+  generatedAt: string;
+}
+
+// ─── Questionnaire Automation ────────────────────────────────────
+
+export interface QuestionnaireQuestion {
+  id: string;
+  question: string;
+  category?: string;
+}
+
+export interface QuestionnaireAnswer {
+  questionId: string;
+  question: string;
+  answer: string;
+  confidence: "high" | "medium" | "low";
+  supportingEvidence: string[];
+  controlReferences: string[];
+}
+
+export type QuestionnaireStatus = "draft" | "completed" | "exported";
+
+export interface QuestionnaireRequest {
+  title: string;
+  questions: QuestionnaireQuestion[];
+}
+
+export interface QuestionnaireResponse {
+  id: string;
+  tenantId: string;
+  questionnaireTitle: string;
+  questions: QuestionnaireQuestion[];
+  responses: QuestionnaireAnswer[];
+  status: QuestionnaireStatus;
+  generatedAt: string;
+  updatedAt: string;
+}
+
+// ─── Integrations ────────────────────────────────────────────────
+
+export type IntegrationType = "vanta" | "drata" | "secureframe";
+
+export interface IntegrationConfig {
+  id: string;
+  tenantId: string;
+  integrationType: IntegrationType;
+  enabled: boolean;
+  lastSyncAt: string | null;
+  lastSyncStatus: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ConfigureIntegrationRequest {
+  apiKey: string;
+  baseUrl?: string;
+}
+
+export interface IntegrationSyncResult {
+  pushed: number;
+  pulled: number;
+  errors: string[];
+  syncedAt: string;
+}
+
+// ─── Vendor Agent Risk ───────────────────────────────────────────
+
+export type VendorAssessmentStatus = "not_assessed" | "in_progress" | "assessed" | "needs_review";
+
+export type VendorRecommendation = "approve" | "conditional" | "reject" | "review";
+
+export interface VendorAgent {
+  id: string;
+  tenantId: string;
+  vendorName: string;
+  agentName: string;
+  description: string;
+  vendorUrl: string | null;
+  contactEmail: string | null;
+  capabilities: string[];
+  dataAccess: string[];
+  riskScore: number;
+  riskLevel: RiskLevel;
+  assessmentStatus: VendorAssessmentStatus;
+  complianceClaims: Record<string, boolean>;
+  lastAssessedAt: string | null;
+  nextReviewDate: string | null;
+  notes: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateVendorAgentRequest {
+  vendorName: string;
+  agentName: string;
+  description: string;
+  vendorUrl?: string;
+  contactEmail?: string;
+  capabilities?: string[];
+  dataAccess?: string[];
+  complianceClaims?: Record<string, boolean>;
+}
+
+export interface UpdateVendorAgentRequest {
+  vendorName?: string;
+  agentName?: string;
+  description?: string;
+  vendorUrl?: string;
+  contactEmail?: string;
+  capabilities?: string[];
+  dataAccess?: string[];
+  complianceClaims?: Record<string, boolean>;
+  notes?: string;
+}
+
+export interface AssessmentFinding {
+  category: string;
+  finding: string;
+  severity: "low" | "medium" | "high" | "critical";
+  status: "open" | "mitigated" | "accepted";
+}
+
+export interface VendorAgentAssessment {
+  id: string;
+  vendorAgentId: string;
+  tenantId: string;
+  assessorId: string;
+  assessmentType: "initial" | "periodic" | "incident";
+  findings: AssessmentFinding[];
+  overallRiskScore: number;
+  recommendation: VendorRecommendation;
+  notes: string | null;
+  assessedAt: string;
+}
+
+export interface CreateAssessmentRequest {
+  assessmentType?: "initial" | "periodic" | "incident";
+  findings?: AssessmentFinding[];
+  notes?: string;
+}
+
+export interface VendorAgentStats {
+  total: number;
+  byRiskLevel: Record<string, number>;
+  byAssessmentStatus: Record<string, number>;
+  avgRiskScore: number;
+  needsReview: number;
+}
+
 // ─── Error Codes ──────────────────────────────────────────────────
 
 export const ErrorCodes = {
@@ -765,6 +969,13 @@ export const ErrorCodes = {
   SUGGESTION_NOT_FOUND: "SUGGESTION_NOT_FOUND",
   SUGGESTION_NOT_APPROVED: "SUGGESTION_NOT_APPROVED",
   SUGGESTION_ALREADY_APPLIED: "SUGGESTION_ALREADY_APPLIED",
+  TRUST_CENTER_NOT_FOUND: "TRUST_CENTER_NOT_FOUND",
+  TRUST_CENTER_DISABLED: "TRUST_CENTER_DISABLED",
+  QUESTIONNAIRE_NOT_FOUND: "QUESTIONNAIRE_NOT_FOUND",
+  INTEGRATION_NOT_FOUND: "INTEGRATION_NOT_FOUND",
+  INTEGRATION_NOT_CONFIGURED: "INTEGRATION_NOT_CONFIGURED",
+  VENDOR_AGENT_NOT_FOUND: "VENDOR_AGENT_NOT_FOUND",
+  ASSESSMENT_NOT_FOUND: "ASSESSMENT_NOT_FOUND",
 } as const;
 
 export type ErrorCode = (typeof ErrorCodes)[keyof typeof ErrorCodes];

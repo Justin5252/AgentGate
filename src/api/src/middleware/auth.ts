@@ -35,6 +35,12 @@ export const authMiddleware = fp(async function authMiddlewarePlugin(server: Fas
         return;
       }
 
+      // Skip auth for trust center public endpoint
+      if (request.url.startsWith("/api/v1/trust-center/") && request.method === "GET" && !request.url.includes("/config")) {
+        request.authMethod = "none";
+        return;
+      }
+
       // Skip auth for SSO auth endpoints (public) and SCIM endpoints (own auth)
       if (request.url.startsWith("/api/v1/auth/") || request.url.startsWith("/api/v1/scim/")) {
         request.authMethod = "none";

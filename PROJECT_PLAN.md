@@ -256,6 +256,69 @@ Leverage the audit trail, policy engine, and integrations already built in Agent
 
 ---
 
+## Phase 5: Interactive Dashboard, CLI, Templates, Streaming (Month 18-20)
+**Goal:** Production-ready dashboard + developer tools
+**Status: COMPLETE**
+
+- All dashboard buttons wired with real API calls + mock fallbacks
+- WebSocket streaming: real-time notifications via ws-manager
+- CLI tool (@agentgate/cli): 7 commands (init, status, agents, policies, authorize, audit, templates)
+- Policy templates: 5 pre-built templates with deploy UI
+- All 9 packages build clean, 76 tests passing
+
+---
+
+## Phase 6: Vanta-Competitive Features (Month 20-22)
+**Goal:** Enterprise compliance parity with Vanta + AI-agent-specific differentiation
+**Status: COMPLETE**
+
+### 6.1 Framework Expansion (11 total, 73 controls)
+- HITRUST CSF v11.3 (7 controls) — healthcare/enterprise certification
+- CMMC 2.0 (7 controls) — DoD/defense contractor requirements
+- NIS2 Directive (6 controls) — EU cybersecurity mandate
+- DORA (6 controls) — EU financial sector resilience
+- Cyber Essentials (5 controls) — UK baseline security
+
+### 6.2 Trust Center
+- Public-facing compliance page per tenant (no auth required)
+- Configurable: select frameworks, custom branding, toggle scores/badges
+- Public URL: `/api/v1/trust-center/:slug`
+- Dashboard admin page for configuration
+
+### 6.3 Questionnaire Automation
+- Keyword-matching engine auto-answers security questionnaires
+- Answers generated from live platform data (agent count, policies, compliance scores)
+- Confidence scoring, supporting evidence, control references
+- Export workflow for sales teams
+
+### 6.4 Vanta Integration
+- Push compliance evidence to Vanta via API
+- Pull Vanta test results for unified visibility
+- Encrypted API key storage (AES-256-CBC with scrypt key derivation)
+- SSRF protection: baseUrl restricted to vanta.com domains
+
+### 6.5 Third-Party Agent Risk Assessment
+- Register vendor agents with capabilities, data access scopes
+- Auto-assessment: risk scoring from compliance claims, data sensitivity, scope
+- Risk levels (0-100) → recommendations (approve/conditional/reject)
+- Assessment history with findings tracking
+
+### 6.6 Security Audit (March 14, 2026)
+- Tenant isolation fixes: all services scoped by tenantId
+- Encryption hardened: require env var in production, scrypt key derivation
+- Input validation: slug, logo URL, accent color, questionnaire limits
+- SSRF protection on Vanta baseUrl
+- Error messages sanitized — no credential leakage
+- XSS prevention: HTTPS-only logo URLs, hex color validation
+
+### Phase 6 Deliverables
+- 5 new DB tables (31 total): trust_center_configs, questionnaire_responses, integration_configs, vendor_agents, vendor_agent_assessments
+- 4 new API route files, 4 new services, 4 new dashboard pages
+- VantaIntegration class in integrations package
+- All 9 packages build clean, all tests passing
+
+---
+
 # Architecture Overview
 
 ```
@@ -350,5 +413,5 @@ AgentGate is a **monorepo with 4 separate Next.js/Fastify apps**, each running o
 
 ---
 
-*Last updated: March 12, 2026*
-*Status: Phase 4 complete — Compliance Autopilot fully implemented (6 frameworks, 42 controls, remediation recommendations, policy auto-update, auditor portal)*
+*Last updated: March 14, 2026*
+*Status: Phase 6 complete — Vanta-Competitive Features (11 frameworks, Trust Center, Questionnaire Automation, Vanta Integration, Vendor Agent Risk)*

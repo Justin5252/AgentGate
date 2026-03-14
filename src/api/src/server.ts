@@ -31,8 +31,16 @@ import { RemediationService } from "./services/remediation.js";
 import { PolicySuggestionService } from "./services/policy-suggestions.js";
 import { auditorRoutes } from "./routes/auditor.js";
 import { policyTemplateRoutes } from "./routes/policy-templates.js";
+import { trustCenterRoutes } from "./routes/trust-center.js";
+import { questionnaireRoutes } from "./routes/questionnaire.js";
+import { integrationRoutes } from "./routes/integrations.js";
+import { vendorAgentRoutes } from "./routes/vendor-agents.js";
 import { wsRoutes } from "./routes/ws.js";
 import { WebSocketManager } from "./services/ws-manager.js";
+import { TrustCenterService } from "./services/trust-center.js";
+import { QuestionnaireService } from "./services/questionnaire.js";
+import { IntegrationService } from "./services/integrations.js";
+import { VendorAgentService } from "./services/vendor-agents.js";
 import type { Database } from "./db/index.js";
 
 declare module "fastify" {
@@ -48,6 +56,10 @@ declare module "fastify" {
     ssoService: SSOService;
     auditorService: AuditorService;
     wsManager: WebSocketManager;
+    trustCenterService: TrustCenterService;
+    questionnaireService: QuestionnaireService;
+    integrationService: IntegrationService;
+    vendorAgentService: VendorAgentService;
   }
 }
 
@@ -99,6 +111,11 @@ export async function buildServer(options: BuildServerOptions) {
   const ssoService = new SSOService(db);
   const auditorService = new AuditorService(db);
 
+  const trustCenterService = new TrustCenterService(db);
+  const questionnaireService = new QuestionnaireService(db);
+  const integrationService = new IntegrationService(db, complianceService);
+  const vendorAgentService = new VendorAgentService(db);
+
   server.decorate("db", db);
   server.decorate("evaluator", evaluator);
   server.decorate("anomalyDetector", anomalyDetector);
@@ -109,6 +126,10 @@ export async function buildServer(options: BuildServerOptions) {
   server.decorate("policySuggestionService", policySuggestionService);
   server.decorate("ssoService", ssoService);
   server.decorate("auditorService", auditorService);
+  server.decorate("trustCenterService", trustCenterService);
+  server.decorate("questionnaireService", questionnaireService);
+  server.decorate("integrationService", integrationService);
+  server.decorate("vendorAgentService", vendorAgentService);
 
   const wsManager = new WebSocketManager();
   server.decorate("wsManager", wsManager);
@@ -254,6 +275,30 @@ export async function buildServer(options: BuildServerOptions) {
       </div>
     </div>
 
+    <div class="section-title">Trust & Questionnaires</div>
+    <div class="endpoints">
+      <div class="endpoint">
+        <span class="endpoint-name"><span class="method">GET</span> Trust Center</span>
+        <span class="endpoint-path">/api/v1/trust-center/:slug</span>
+      </div>
+      <div class="endpoint">
+        <span class="endpoint-name"><span class="method post">POST</span> Questionnaire</span>
+        <span class="endpoint-path">/api/v1/questionnaire/generate</span>
+      </div>
+    </div>
+
+    <div class="section-title">Integrations & Vendor Risk</div>
+    <div class="endpoints">
+      <div class="endpoint">
+        <span class="endpoint-name"><span class="method">GET</span> Integrations</span>
+        <span class="endpoint-path"><a href="/api/v1/integrations">/api/v1/integrations</a></span>
+      </div>
+      <div class="endpoint">
+        <span class="endpoint-name"><span class="method">GET</span> Vendor Agents</span>
+        <span class="endpoint-path"><a href="/api/v1/vendor-agents">/api/v1/vendor-agents</a></span>
+      </div>
+    </div>
+
     <div class="section-title">Management</div>
     <div class="endpoints">
       <div class="endpoint">
@@ -294,6 +339,10 @@ export async function buildServer(options: BuildServerOptions) {
         scim: "/api/v1/scim/:tenantSlug",
         auditor: "/api/v1/auditor",
         policyTemplates: "/api/v1/policy-templates",
+        trustCenter: "/api/v1/trust-center",
+        questionnaire: "/api/v1/questionnaire",
+        integrations: "/api/v1/integrations",
+        vendorAgents: "/api/v1/vendor-agents",
       },
     };
   });
@@ -315,6 +364,10 @@ export async function buildServer(options: BuildServerOptions) {
   await server.register(scimRoutes, { prefix: "/api/v1/scim/:tenantSlug" });
   await server.register(auditorRoutes, { prefix: "/api/v1/auditor" });
   await server.register(policyTemplateRoutes, { prefix: "/api/v1/policy-templates" });
+  await server.register(trustCenterRoutes, { prefix: "/api/v1/trust-center" });
+  await server.register(questionnaireRoutes, { prefix: "/api/v1/questionnaire" });
+  await server.register(integrationRoutes, { prefix: "/api/v1/integrations" });
+  await server.register(vendorAgentRoutes, { prefix: "/api/v1/vendor-agents" });
   await server.register(wsRoutes);
 
   return server;

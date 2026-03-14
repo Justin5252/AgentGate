@@ -591,6 +591,36 @@ export const mockFrameworks: MockFramework[] = [
     totalControls: 8, passingControls: 5, failingControls: 2, warningControls: 1,
     complianceScore: 71, lastEvaluatedAt: "2026-03-10T18:00:00Z", enabled: false, createdAt: "2026-02-20T10:00:00Z",
   },
+  {
+    id: "fw-5", frameworkId: "hitrust_csf", name: "HITRUST CSF", version: "11.3",
+    description: "HITRUST Common Security Framework for AI agent operations",
+    totalControls: 7, passingControls: 5, failingControls: 1, warningControls: 1,
+    complianceScore: 71, lastEvaluatedAt: "2026-03-10T18:00:00Z", enabled: false, createdAt: "2026-03-01T10:00:00Z",
+  },
+  {
+    id: "fw-6", frameworkId: "cmmc_2", name: "CMMC 2.0", version: "2.0",
+    description: "Cybersecurity Maturity Model Certification for DoD AI agents",
+    totalControls: 7, passingControls: 4, failingControls: 2, warningControls: 1,
+    complianceScore: 57, lastEvaluatedAt: "2026-03-10T18:00:00Z", enabled: false, createdAt: "2026-03-01T10:00:00Z",
+  },
+  {
+    id: "fw-7", frameworkId: "nis2", name: "NIS2 Directive", version: "2024",
+    description: "EU Network and Information Security Directive 2",
+    totalControls: 6, passingControls: 4, failingControls: 1, warningControls: 1,
+    complianceScore: 67, lastEvaluatedAt: "2026-03-10T18:00:00Z", enabled: false, createdAt: "2026-03-01T10:00:00Z",
+  },
+  {
+    id: "fw-8", frameworkId: "dora", name: "DORA", version: "2025",
+    description: "Digital Operational Resilience Act for financial sector AI",
+    totalControls: 6, passingControls: 4, failingControls: 1, warningControls: 1,
+    complianceScore: 67, lastEvaluatedAt: "2026-03-10T18:00:00Z", enabled: false, createdAt: "2026-03-01T10:00:00Z",
+  },
+  {
+    id: "fw-9", frameworkId: "cyber_essentials", name: "Cyber Essentials", version: "2024",
+    description: "UK baseline security controls for AI agent infrastructure",
+    totalControls: 5, passingControls: 3, failingControls: 1, warningControls: 1,
+    complianceScore: 60, lastEvaluatedAt: "2026-03-10T18:00:00Z", enabled: false, createdAt: "2026-03-01T10:00:00Z",
+  },
 ];
 
 export const mockComplianceControls: MockControl[] = [
@@ -923,6 +953,218 @@ export const mockAuditorAccessLogs: AuditorAccessLog[] = [
 ];
 
 // ─── Policy Templates ─────────────────────────────────────────────
+
+// ─── Trust Center ────────────────────────────────────────────────
+
+export interface MockTrustCenterConfig {
+  id: string;
+  tenantId: string;
+  enabled: boolean;
+  publicSlug: string;
+  customTitle: string | null;
+  customDescription: string | null;
+  showFrameworks: string[];
+  showComplianceScores: boolean;
+  showLastAuditDate: boolean;
+  showControlSummary: boolean;
+  showBadges: boolean;
+  customLogo: string | null;
+  customAccentColor: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export const mockTrustCenterConfig: MockTrustCenterConfig = {
+  id: "tc-1",
+  tenantId: "tenant-1",
+  enabled: true,
+  publicSlug: "acme-corp",
+  customTitle: "Acme Corp Trust Center",
+  customDescription: "Transparency into our AI agent security and compliance posture.",
+  showFrameworks: ["soc2", "gdpr", "hipaa"],
+  showComplianceScores: true,
+  showLastAuditDate: true,
+  showControlSummary: true,
+  showBadges: true,
+  customLogo: null,
+  customAccentColor: null,
+  createdAt: "2026-03-01T10:00:00Z",
+  updatedAt: "2026-03-10T14:00:00Z",
+};
+
+// ─── Questionnaire ────────────────────────────────────────────────
+
+export interface MockQuestionnaire {
+  id: string;
+  tenantId: string;
+  questionnaireTitle: string;
+  questions: Array<{ id: string; question: string; category?: string }>;
+  responses: Array<{ questionId: string; question: string; answer: string; confidence: string; supportingEvidence: string[]; controlReferences: string[] }>;
+  status: string;
+  generatedAt: string;
+  updatedAt: string;
+}
+
+export const mockQuestionnaires: MockQuestionnaire[] = [
+  {
+    id: "q-1",
+    tenantId: "tenant-1",
+    questionnaireTitle: "Prospect Security Review — Q1 2026",
+    questions: [
+      { id: "q1", question: "How do you manage AI agent identities?", category: "Identity" },
+      { id: "q2", question: "What audit logging is in place for agent actions?", category: "Audit" },
+      { id: "q3", question: "What compliance frameworks do you support?", category: "Compliance" },
+    ],
+    responses: [
+      { questionId: "q1", question: "How do you manage AI agent identities?", answer: "AgentGate manages 5 registered AI agents, each with a unique UUIDv7 identity, lifecycle status tracking, risk-level classification, and capability declarations.", confidence: "high", supportingEvidence: ["5 registered agents"], controlReferences: ["CC6.1", "IA.L2-3.5.1"] },
+      { questionId: "q2", question: "What audit logging is in place for agent actions?", answer: "We maintain an append-only audit trail recording every agent action, resource accessed, authorization decision, policy applied, and response time. Logs are immutable and queryable.", confidence: "high", supportingEvidence: ["1247 audit log entries"], controlReferences: ["CC7.1", "AU.L2-3.3.1", "Art.30"] },
+      { questionId: "q3", question: "What compliance frameworks do you support?", answer: "AgentGate maintains compliance across 4 frameworks (SOC 2 Type II, GDPR, HIPAA, ISO 27001:2022), with continuous automated evaluation, evidence collection, gap analysis, and remediation recommendations.", confidence: "high", supportingEvidence: ["4 frameworks", "82% compliance score"], controlReferences: [] },
+    ],
+    status: "completed",
+    generatedAt: "2026-03-10T15:00:00Z",
+    updatedAt: "2026-03-10T15:00:00Z",
+  },
+];
+
+// ─── Vendor Agents ────────────────────────────────────────────────
+
+export interface MockVendorAgent {
+  id: string;
+  tenantId: string;
+  vendorName: string;
+  agentName: string;
+  description: string;
+  vendorUrl: string | null;
+  contactEmail: string | null;
+  capabilities: string[];
+  dataAccess: string[];
+  riskScore: number;
+  riskLevel: string;
+  assessmentStatus: string;
+  complianceClaims: Record<string, boolean>;
+  lastAssessedAt: string | null;
+  nextReviewDate: string | null;
+  notes: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export const mockVendorAgents: MockVendorAgent[] = [
+  {
+    id: "va-1",
+    tenantId: "tenant-1",
+    vendorName: "OpenAI",
+    agentName: "GPT-4 Assistant",
+    description: "Customer-facing assistant powered by GPT-4",
+    vendorUrl: "https://openai.com",
+    contactEmail: "security@openai.com",
+    capabilities: ["read:customer-data", "write:responses", "read:knowledge-base"],
+    dataAccess: ["pii", "customer-tickets"],
+    riskScore: 45,
+    riskLevel: "medium",
+    assessmentStatus: "assessed",
+    complianceClaims: { soc2: true, gdpr: true, hipaa: false },
+    lastAssessedAt: "2026-03-05T10:00:00Z",
+    nextReviewDate: "2026-06-05T10:00:00Z",
+    notes: "Annual SOC 2 report reviewed. GDPR DPA in place.",
+    createdAt: "2026-02-01T10:00:00Z",
+    updatedAt: "2026-03-05T10:00:00Z",
+  },
+  {
+    id: "va-2",
+    tenantId: "tenant-1",
+    vendorName: "Anthropic",
+    agentName: "Claude Code Review",
+    description: "Automated code review agent",
+    vendorUrl: "https://anthropic.com",
+    contactEmail: "trust@anthropic.com",
+    capabilities: ["read:repos", "write:comments"],
+    dataAccess: ["source-code"],
+    riskScore: 30,
+    riskLevel: "medium",
+    assessmentStatus: "assessed",
+    complianceClaims: { soc2: true, gdpr: true },
+    lastAssessedAt: "2026-03-08T10:00:00Z",
+    nextReviewDate: "2026-06-08T10:00:00Z",
+    notes: null,
+    createdAt: "2026-02-15T10:00:00Z",
+    updatedAt: "2026-03-08T10:00:00Z",
+  },
+  {
+    id: "va-3",
+    tenantId: "tenant-1",
+    vendorName: "DataBot Inc",
+    agentName: "Market Scraper v3",
+    description: "Third-party data aggregation agent",
+    vendorUrl: null,
+    contactEmail: null,
+    capabilities: ["read:external", "write:database", "read:financial"],
+    dataAccess: ["financial", "market-data", "pii"],
+    riskScore: 72,
+    riskLevel: "high",
+    assessmentStatus: "needs_review",
+    complianceClaims: {},
+    lastAssessedAt: "2026-01-15T10:00:00Z",
+    nextReviewDate: "2026-03-15T10:00:00Z",
+    notes: "No compliance certifications. Broad data access.",
+    createdAt: "2026-01-10T10:00:00Z",
+    updatedAt: "2026-01-15T10:00:00Z",
+  },
+  {
+    id: "va-4",
+    tenantId: "tenant-1",
+    vendorName: "InternalTools",
+    agentName: "Deployment Bot",
+    description: "Internal CI/CD deployment agent from vendor",
+    vendorUrl: "https://internaltools.dev",
+    contactEmail: "support@internaltools.dev",
+    capabilities: ["deploy:production", "read:configs"],
+    dataAccess: ["infrastructure"],
+    riskScore: 55,
+    riskLevel: "high",
+    assessmentStatus: "not_assessed",
+    complianceClaims: { soc2: true },
+    lastAssessedAt: null,
+    nextReviewDate: null,
+    notes: null,
+    createdAt: "2026-03-10T10:00:00Z",
+    updatedAt: "2026-03-10T10:00:00Z",
+  },
+];
+
+export const mockVendorAgentStats = {
+  total: 4,
+  byRiskLevel: { low: 0, medium: 2, high: 2, critical: 0 },
+  byAssessmentStatus: { not_assessed: 1, in_progress: 0, assessed: 2, needs_review: 1 },
+  avgRiskScore: 51,
+  needsReview: 2,
+};
+
+// ─── Integration Configs ─────────────────────────────────────────
+
+export interface MockIntegrationConfig {
+  id: string;
+  tenantId: string;
+  integrationType: string;
+  enabled: boolean;
+  lastSyncAt: string | null;
+  lastSyncStatus: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export const mockIntegrations: MockIntegrationConfig[] = [
+  {
+    id: "int-1",
+    tenantId: "tenant-1",
+    integrationType: "vanta",
+    enabled: true,
+    lastSyncAt: "2026-03-10T16:00:00Z",
+    lastSyncStatus: "success",
+    createdAt: "2026-03-05T10:00:00Z",
+    updatedAt: "2026-03-10T16:00:00Z",
+  },
+];
 
 export const mockPolicyTemplates: PolicyTemplate[] = [
   {

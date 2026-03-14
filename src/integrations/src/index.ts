@@ -4,3 +4,4 @@ export { AnthropicGuard, type AnthropicCallContext } from "./anthropic.js";
 export { LangChainGuard, type ToolStartEvent, type ChainStartEvent } from "./langchain.js";
 export { CrewAIGuard } from "./crewai.js";
 export { WebhookManager, type WebhookConfig, type WebhookEvent, type WebhookPayload } from "./webhook.js";
+export { VantaIntegration, type VantaConfig, type VantaEvidencePayload, type VantaTest, type VantaMonitor } from "./vanta.js";
